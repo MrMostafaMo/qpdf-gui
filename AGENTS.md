@@ -29,8 +29,11 @@ pnpm tauri build
 | Animations | Framer Motion 12 |
 | Icons | Lucide React |
 | Toasts | Sonner |
-| PDF engine | `qpdf` CLI (shelled out via `std::process::Command`) |
+| PDF engine | `qpdf` CLI (bundled, shelled out via `std::process::Command`) |
+| Desktop notifications | `tauri-plugin-notification` |
+| Internationalization | Arabic + English via `useI18n()` hook |
 | Linter | oxlint |
+| Tests | Vitest + happy-dom + @testing-library/react |
 
 ## Project Structure
 
@@ -41,22 +44,24 @@ qpdf-gui/
 │   ├── index.css                 # Tailwind + shadcn theme + keyframes
 │   ├── components/
 │   │   ├── layout/               # AppLayout, Sidebar, Header
-│   │   ├── shared/               # DropZone, FileCard, EmptyState, ProgressOverlay, ProgressBar, OperationLogs
+│   │   ├── shared/               # DropZone, ProgressOverlay, ProgressBar, OperationLogs
 │   │   └── ui/                   # shadcn Button
 │   ├── features/                 # 13 page components (one per route)
-│   ├── hooks/                    # useQpdf, useFilePicker, useTheme
+│   ├── hooks/                    # useQpdf, useFilePicker, useFileSelection, useTheme
+│   ├── i18n/                     # locales/en.ts, locales/ar.ts, index.ts
 │   ├── stores/                   # appStore, fileStore, settingsStore, loadingStore
 │   ├── types/                    # PdfInfo, OperationResult, Settings
 │   └── utils/                    # format.ts, validators.ts
 ├── src-tauri/                    # Backend
 │   ├── icons/                    # App icons (generated from logo.png)
+│   ├── resources/                # Bundled qpdf binaries + shared libs (CI-downloaded, gitignored)
 │   ├── src/
 │   │   ├── commands/mod.rs       # 11 Tauri commands
-│   │   ├── services/qpdf.rs      # QpdfService — shells out to `qpdf`
+│   │   ├── services/qpdf.rs      # QpdfService — resolves bundled qpdf, shells out to `qpdf` CLI
 │   │   ├── models/mod.rs         # PdfInfo, OperationResult structs
 │   │   └── utils/error.rs        # AppError enum
 │   ├── capabilities/default.json # Plugin permissions
-│   └── tauri.conf.json           # Window: 1200x800, min 900x600
+│   └── tauri.conf.json           # Window: 1200x800, min 900x600, bundled resources
 ├── logo.png                      # Source image for app icon
 └── package.json
 ```
@@ -71,6 +76,7 @@ User → Feature Page → useQpdf().runWithToast(cmd, args)
   → QpdfService.method()     [shells out to `qpdf` CLI]
   → OperationResult           [returned to JS]
   → toast + OperationLog      [UI feedback]
+  → notification              [if window not focused]
 ```
 
 ### Key Convention: camelCase ↔ snake_case
@@ -111,8 +117,8 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 | Store | Persistence | Key Fields |
 |-------|-------------|------------|
 | `appStore` | None (memory) | `sidebarCollapsed`, `theme` |
-| `fileStore` | None (memory) | `currentFile`, `recentFiles` |
-| `settingsStore` | `tauri-plugin-store` (`settings.json`) | `default_output_dir`, `overwrite_existing`, `theme`, `remember_recent_files`, `max_recent_files` |
+| `fileStore` | None (memory) | `recentFiles[]`, `pendingFile` |
+| `settingsStore` | `tauri-plugin-store` (`settings.json`) | `default_output_dir`, `overwrite_existing`, `theme`, `remember_recent_files`, `max_recent_files`, `language` |
 | `logStore` | `zustand/persist` (localStorage) | `entries[]` (max 100) |
 | `loadingStore` | None (memory) | `loading` — global loading state for ProgressBar |
 
@@ -120,9 +126,11 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 
 | Hook | Purpose |
 |------|---------|
-| `useQpdf` | `{ loading, run, runWithToast }` — invoke wrapper with toast + log + global loading state |
-| `useFilePicker` | `{ pickFiles, pickDirectory, saveFile }` — dialog wrappers |
+| `useQpdf` | `{ loading, run, runWithToast, startLoading }` — invoke wrapper with toast + log + global loading state + desktop notification (when unfocused) |
+| `useFilePicker` | `{ pickFiles, pickDirectory, saveFile }` — dialog wrappers (respects `default_output_dir`) |
+| `useFileSelection` | `{ file, files, handleDrop, saveFile, pickDirectory }` — pendingFile sync + file state + drag-drop |
 | `useTheme` | `{ theme, setTheme }` — syncs theme to `document.documentElement.classList` |
+| `useI18n` | Returns translations object for current language (Arabic/English) |
 
 ## Routes
 
@@ -130,17 +138,53 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 |------|------|
 | `/` | Dashboard (tool grid + recent files + logs) |
 | `/extract` | Extract Pages (with page range validation) |
-| `/merge` | Merge PDFs (multi-file) |
+| `/merge` | Merge PDFs (multi-file, reorderable) |
 | `/split` | Split PDF (ranges or every N pages, with validation) |
 | `/rotate` | Rotate Pages (with optional page range validation) |
 | `/delete` | Delete Pages (with page range validation) |
 | `/encrypt` | Encrypt PDF (multi-file, bulk encrypt with output dir) |
 | `/decrypt` | Decrypt PDF (multi-file, bulk decrypt with output dir) |
-| `/optimize` | Optimize PDF |
+| `/optimize` | Optimize PDF (shows before/after size comparison) |
 | `/linearize` | Linearize PDF |
-| `/info` | PDF Info |
+| `/info` | PDF Info (open in system viewer) |
 | `/batch` | Batch Operations (folder-based) |
-| `/settings` | Settings |
+| `/settings` | Settings (language, output dir, developer info) |
+
+## Internationalization
+
+- Two locales: English (`src/i18n/locales/en.ts`) and Arabic (`src/i18n/locales/ar.ts`)
+- Language persisted in `settingsStore.language`
+- RTL support: `document.documentElement.dir` toggles in `App.tsx`, Sidebar uses logical `ms-*` properties
+- All components use `useI18n()` hook to get `t()` translations
+
+## Desktop Notifications
+
+- Uses `tauri-plugin-notification` + `@tauri-apps/plugin-notification`
+- Fires system notification only when window is **not focused** (`!isFocused()`)
+- When app is open and focused, only Sonner toasts are shown
+- Integrated into `useQpdf().runWithToast()` — all 10 feature operations inherit this behavior
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+O` | Open Info page |
+| `Ctrl+Shift+E` | Extract |
+| `Ctrl+Shift+M` | Merge |
+| `Ctrl+Shift+S` | Split |
+| `Ctrl+Shift+D` | Delete |
+| `Ctrl+Shift+R` | Rotate |
+| `Ctrl+Shift+Z` | Optimize |
+| `Ctrl+Shift+L` | Linearize |
+| `Ctrl+,` | Settings |
+
+## CI/CD
+
+- GitHub Actions: `.github/workflows/build.yml`
+- Matrix: Linux (ubuntu-22.04, .deb + .rpm), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
+- qpdf is bundled: CI downloads prebuilt binaries (Linux/Windows) or compiles from source (macOS) into `src-tauri/resources/`
+- Auto-update: signing key in `src-tauri/updater.key` (gitignored), GitHub releases with `latest.json`
+- `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true` suppresses Node.js 20 deprecation warning
 
 ## Input Validation
 
@@ -165,7 +209,15 @@ Encrypt and Decrypt support multiple files:
 - State is `string[]` (files array) with remove buttons
 - Uses `pickDirectory()` for output dir (not save dialog per file)
 - Loops over files, calling the single-file command per file
-- Each file gets its own OperationLog entry
+- Each file gets its own OperationLog entry with per-file progress
+
+## Tests
+
+- Framework: Vitest + happy-dom + @testing-library/react
+- Run: `pnpm vitest run`
+- `src/utils/__tests__/validators.test.ts` — 10 tests
+- `src/stores/__tests__/fileStore.test.ts` — 7 tests
+- `src/stores/__tests__/appStore.test.ts` — 4 tests
 
 ## Adding a New Command
 
@@ -179,4 +231,5 @@ Encrypt and Decrypt support multiple files:
 
 - No PDF viewer/renderer — manipulate only
 - qpdf is bundled with the app (no separate install needed)
-- No test suite
+- macOS build is Apple Silicon (arm64), not universal binary
+- AppImage skipped on Linux (linuxdeploy broken on ubuntu-22.04)
