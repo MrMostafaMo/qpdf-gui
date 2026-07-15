@@ -134,6 +134,14 @@ export default function SettingsPage() {
       <div className="space-y-2 rounded-lg border border-border bg-card p-4 text-center">
         <p className="text-sm font-medium">{t.settings.developer.name}</p>
         <p className="text-xs text-muted-foreground">{t.settings.developer.credit}</p>
+        <a
+          href="https://t.me/mrMostafaMo"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+        >
+          {t.settings.developer.telegram}
+        </a>
       </div>
     </div>
   )

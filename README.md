@@ -24,21 +24,8 @@ Built with **Tauri v2** (Rust) + **React 19** + **TypeScript** + **TailwindCSS v
 
 - [Node.js](https://nodejs.org/) 18+ and [pnpm](https://pnpm.io/)
 - [Rust](https://www.rust-lang.org/tools/install) 1.77+
-- `qpdf` installed on your system:
 
-```bash
-# Fedora / RHEL
-sudo dnf install qpdf
-
-# Ubuntu / Debian
-sudo apt install qpdf
-
-# macOS
-brew install qpdf
-
-# Windows
-winget install qpdf
-```
+**Note:** qpdf is bundled with the app. No separate installation required.
 
 ## Install & Run
 
@@ -70,7 +57,7 @@ Output will be in `src-tauri/target/release/bundle/`.
 | Routing | React Router v7 |
 | Icons | Lucide React |
 | Toasts | Sonner |
-| PDF engine | qpdf CLI |
+| PDF engine | qpdf CLI (bundled) |
 
 ## Project Structure
 

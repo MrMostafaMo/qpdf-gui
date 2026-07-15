@@ -249,6 +249,7 @@ const en = {
     developer: {
       name: "Mostafa Mohamed",
       credit: "Made with love in Egypt 🇪🇬",
+      telegram: "💬 Telegram",
     },
   },
 

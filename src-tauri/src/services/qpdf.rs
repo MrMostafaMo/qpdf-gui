@@ -1,15 +1,66 @@
 use serde_json::Value;
 use std::process::Command;
+use tauri::Manager;
 
 use crate::models::PdfInfo;
 use crate::utils::{AppError, AppResult};
+use crate::APP_HANDLE;
+
+/// Resolve the bundled qpdf binary path and library directories.
+/// In production, qpdf binary and shared libraries are in the resource directory.
+/// In dev, falls back to bare "qpdf" on PATH.
+fn qpdf_command(args: &[&str]) -> Command {
+    let bin_name = if cfg!(target_os = "windows") {
+        "qpdf.exe"
+    } else {
+        "qpdf"
+    };
+
+    // Try to find bundled binary in the resource directory
+    if let Some(handle) = APP_HANDLE.get() {
+        if let Ok(resource_dir) = handle.path().resource_dir() {
+            let qpdf_path = resource_dir.join(bin_name);
+            if qpdf_path.exists() {
+                let mut cmd = Command::new(&qpdf_path);
+                cmd.args(args);
+
+                // Set library paths for bundled shared libraries
+                if cfg!(target_os = "windows") {
+                    let mut path = std::env::var("PATH").unwrap_or_default();
+                    path.push(';');
+                    path.push_str(&resource_dir.to_string_lossy());
+                    cmd.env("PATH", &path);
+                }
+                if cfg!(target_os = "linux") {
+                    let lib_dir = resource_dir.join("lib");
+                    if lib_dir.exists() {
+                        let lib_str = lib_dir.to_string_lossy();
+                        let existing = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
+                        let new_path = if existing.is_empty() {
+                            lib_str.to_string()
+                        } else {
+                            format!("{existing}:{lib_str}")
+                        };
+                        cmd.env("LD_LIBRARY_PATH", &new_path);
+                    }
+                }
+                cmd.current_dir(&resource_dir);
+                return cmd;
+            }
+        }
+    }
+
+    // Fallback: bare "qpdf" on PATH (dev mode)
+    let mut cmd = Command::new("qpdf");
+    cmd.args(args);
+    cmd
+}
 
 pub struct QpdfService;
 
 impl QpdfService {
     fn run_qpdf(args: &[&str]) -> AppResult<String> {
-        let output = Command::new("qpdf")
-            .args(args)
+        let output = qpdf_command(args)
             .output()
             .map_err(|e| AppError::Qpdf(format!("Failed to execute qpdf: {e}")))?;
 
@@ -30,8 +81,7 @@ impl QpdfService {
     }
 
     pub fn is_encrypted(file_path: &str) -> AppResult<bool> {
-        let output = Command::new("qpdf")
-            .args(["--is-encrypted", file_path])
+        let output = qpdf_command(&["--is-encrypted", file_path])
             .output()
             .map_err(|e| AppError::Qpdf(format!("Failed to execute qpdf: {e}")))?;
 

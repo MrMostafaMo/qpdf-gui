@@ -3,6 +3,9 @@ mod models;
 mod services;
 mod utils;
 
+use std::sync::OnceLock;
+pub(crate) static APP_HANDLE: OnceLock<tauri::AppHandle> = OnceLock::new();
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -12,6 +15,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::default().build())
         .setup(|app| {
+            APP_HANDLE.set(app.handle().clone()).ok();
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()

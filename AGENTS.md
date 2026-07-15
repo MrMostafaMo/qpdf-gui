@@ -6,8 +6,8 @@ Tauri v2 (Rust) + React 19 + TypeScript + TailwindCSS v4.
 ## Quick Start
 
 ```bash
-# System dependency (Linux)
-sudo dnf install qpdf gtk3 webkit2gtk4.1  # or apt equivalent
+# System dependencies (Linux)
+sudo dnf install gtk3 webkit2gtk4.1  # or apt equivalent
 
 # Dev
 pnpm install
@@ -178,5 +178,5 @@ Encrypt and Decrypt support multiple files:
 ## Known Limitations
 
 - No PDF viewer/renderer — manipulate only
-- `qpdf` must be installed on the host system
+- qpdf is bundled with the app (no separate install needed)
 - No test suite

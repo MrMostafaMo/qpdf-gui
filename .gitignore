@@ -16,6 +16,10 @@ dist-ssr
 src-tauri/updater.key
 src-tauri/updater.key.pub
 
+# Bundled qpdf binary and libraries (downloaded during CI build)
+src-tauri/resources/*
+!src-tauri/resources/.gitkeep
+
 # Environment
 .env
 .env.*

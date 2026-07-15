@@ -231,8 +231,9 @@ const ar: TranslationKeys = {
     defaultOutputHint: "اتركه فارغاً للحفظ في نفس مجلد الملف الأصلي",
     language: "اللغة",
     developer: {
-      name: "Mostafa Mohamed",
+      name: "مصطفى محمد (Mostafa Mohamed)",
       credit: "صنع بحب في مصر 🇪🇬",
+      telegram: "💬 تيليجرام",
     },
   },
 

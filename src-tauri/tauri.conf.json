@@ -37,6 +37,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": [
+      "resources/*"
+    ],
     "category": "Utility",
     "shortDescription": "Cross-platform desktop PDF toolbox",
     "longDescription": "A cross-platform desktop application for PDF manipulation powered by qpdf. Supports extract, merge, split, rotate, delete, encrypt, decrypt, optimize, linearize, and batch operations."
