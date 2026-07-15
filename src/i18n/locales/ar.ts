@@ -54,6 +54,9 @@ const ar: TranslationKeys = {
     filesSelected: "ملفات محددة",
     fileSelected: "ملف محدد",
     chooseOutputFolder: "اختر مجلد الإخراج",
+    result: "النتيجة",
+    before: "قبل",
+    after: "بعد",
   },
 
   dashboard: {

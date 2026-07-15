@@ -1,30 +1,21 @@
-import { DropZone } from "@/components/shared"
-import { useFilePicker, useQpdf } from "@/hooks"
-import { useFileStore } from "@/stores"
-import { useState, useEffect } from "react"
+import { useQpdf, useFileSelection } from "@/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
-import { ProgressOverlay } from "@/components/shared"
+import { ProgressOverlay, DropZone } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { Save, FolderOpen } from "lucide-react"
 import { isValidPageRange } from "@/utils/validators"
 import { useI18n } from "@/i18n"
 
 export default function SplitPage() {
   const { loading, runWithToast, startLoading } = useQpdf()
-  const { pickDirectory } = useFilePicker()
-  const [file, setFile] = useState<string | null>(null)
+  const { file, handleDrop, pickDirectory } = useFileSelection()
   const [mode, setMode] = useState<"ranges" | "every">("ranges")
   const [pages, setPages] = useState("")
   const [interval, setInterval] = useState(1)
   const [outputDir, setOutputDir] = useState<string | null>(null)
-  const pendingFile = useFileStore((s) => s.pendingFile)
-  const setPendingFile = useFileStore((s) => s.setPendingFile)
   const t = useI18n()
 
-  useEffect(() => {
-    if (pendingFile) { setFile(pendingFile); setPendingFile(null) }
-  }, [])
-
-  const handleDrop = (paths: string[]) => setFile(paths[0])
   const pagesValid = mode === "every" || !pages || isValidPageRange(pages)
 
   const handleSplit = async () => {
@@ -80,17 +71,13 @@ export default function SplitPage() {
 
       <div className="flex gap-2">
         {(["ranges", "every"] as const).map((m) => (
-          <button
+          <Button
             key={m}
             onClick={() => setMode(m)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              mode === m
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            }`}
+            variant={mode === m ? "default" : "secondary"}
           >
             {m === "ranges" ? t.split.byRanges : t.split.everyN}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -120,26 +107,25 @@ export default function SplitPage() {
         </div>
       )}
 
-      <button
+      <Button
         onClick={handleSplit}
         disabled={loading || !file || !pagesValid}
-        className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+        variant="outline"
       >
-        <FolderOpen className="h-4 w-4" />
+        <FolderOpen />
         {outputDir ? outputDir.split("/").pop() : t.shared.chooseOutputFolder}
-      </button>
+      </Button>
       {outputDir && (
         <p className="truncate text-xs text-muted-foreground">{outputDir}</p>
       )}
 
-      <button
+      <Button
         onClick={handleSplit}
         disabled={loading || !file || !pagesValid}
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
-        <Save className="h-4 w-4" />
+        <Save />
         {loading ? t.split.btnLoading : t.split.btnIdle}
-      </button>
+      </Button>
     </div>
   )
 }

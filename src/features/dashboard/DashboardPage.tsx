@@ -17,6 +17,8 @@ import {
 } from "lucide-react"
 import { OperationLogs } from "@/components/shared/OperationLogs"
 import { useI18n } from "@/i18n"
+import { formatFileSize } from "@/utils/format"
+import { Button } from "@/components/ui/button"
 
 const TOOL_KEYS = [
   { to: "/info", icon: Info, key: "info" as const },
@@ -48,12 +50,6 @@ export default function DashboardPage() {
     navigate(to)
   }
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
-
   return (
     <div className="space-y-8">
       <div>
@@ -71,24 +67,26 @@ export default function DashboardPage() {
             <p className="text-sm font-medium">
               {t.dashboard.chooseToolFor}
             </p>
-            <button
+            <Button
               onClick={() => setPendingFile(null)}
-              className="text-muted-foreground hover:text-foreground"
+              variant="ghost"
+              size="icon-xs"
             >
-              <X className="h-4 w-4" />
-            </button>
+              <X />
+            </Button>
           </div>
           <p className="truncate text-xs text-muted-foreground">{pendingFile}</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {TOOL_KEYS.map(({ to, icon: Icon, key }) => (
-              <button
+              <Button
                 key={to}
                 onClick={() => handleToolSelect(to)}
-                className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent"
+                variant="outline"
+                className="justify-start"
               >
-                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Icon className="text-muted-foreground" />
                 <span>{t.dashboard.tools[key].label}</span>
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -114,25 +112,27 @@ export default function DashboardPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium text-muted-foreground">{t.dashboard.recentFiles}</h2>
-            <button
+            <Button
               onClick={clearRecentFiles}
-              className="text-xs text-muted-foreground hover:text-destructive"
+              variant="ghost"
+              size="xs"
             >
               {t.dashboard.clearAll}
-            </button>
+            </Button>
           </div>
           <div className="space-y-1">
             {recentFiles.map((f) => (
-              <div
+              <button
                 key={f.file_path}
-                className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm"
+                onClick={() => { setPendingFile(f.file_path); navigate("/info") }}
+                className="flex w-full items-center justify-between rounded-md border border-border px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent"
               >
                 <span className="truncate">{f.file_name}</span>
                 <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                  <span>{formatSize(f.file_size)}</span>
+                  <span>{formatFileSize(f.file_size)}</span>
                   <span>{f.page_count} {t.shared.pages}</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

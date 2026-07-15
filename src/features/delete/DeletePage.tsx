@@ -1,27 +1,18 @@
-import { DropZone } from "@/components/shared"
-import { useFilePicker, useQpdf } from "@/hooks"
-import { useFileStore } from "@/stores"
-import { useState, useEffect } from "react"
+import { useQpdf, useFileSelection } from "@/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
-import { ProgressOverlay } from "@/components/shared"
+import { ProgressOverlay, DropZone } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { Save } from "lucide-react"
 import { isValidPageRange } from "@/utils/validators"
 import { useI18n } from "@/i18n"
 
 export default function DeletePage() {
   const { loading, runWithToast, startLoading } = useQpdf()
-  const { saveFile } = useFilePicker()
-  const [file, setFile] = useState<string | null>(null)
+  const { file, handleDrop, saveFile } = useFileSelection()
   const [pages, setPages] = useState("")
-  const pendingFile = useFileStore((s) => s.pendingFile)
-  const setPendingFile = useFileStore((s) => s.setPendingFile)
   const t = useI18n()
 
-  useEffect(() => {
-    if (pendingFile) { setFile(pendingFile); setPendingFile(null) }
-  }, [])
-
-  const handleDrop = (paths: string[]) => setFile(paths[0])
   const pagesValid = !pages || isValidPageRange(pages)
 
   const handleDelete = async () => {
@@ -62,14 +53,14 @@ export default function DeletePage() {
         onChange={(e) => setPages(e.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
-      <button
+      <Button
         onClick={handleDelete}
         disabled={loading || !file || !pages || !pagesValid}
-        className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+        variant="destructive"
       >
-        <Save className="h-4 w-4" />
+        <Save />
         {loading ? t.delete.btnLoading : t.delete.btnIdle}
-      </button>
+      </Button>
     </div>
   )
 }

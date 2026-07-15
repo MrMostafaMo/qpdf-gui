@@ -4,6 +4,7 @@ import { useFileStore } from "@/stores"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { Save, FolderOpen } from "lucide-react"
 import { useI18n } from "@/i18n"
 
@@ -70,16 +71,16 @@ export default function BatchPage() {
 
         <div>
           <p className="mb-2 text-sm font-medium">{t.batch.outputDir}</p>
-          <button
+          <Button
             onClick={async () => {
               const dir = await pickDirectory()
               if (dir) setOutputDir(dir)
             }}
-            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+            variant="outline"
           >
-            <FolderOpen className="h-4 w-4" />
+            <FolderOpen />
             {outputDir ? outputDir.split("/").pop() : t.shared.chooseOutputFolder}
-          </button>
+          </Button>
           {outputDir && (
             <p className="mt-1 truncate text-xs text-muted-foreground">
               {outputDir}
@@ -92,29 +93,24 @@ export default function BatchPage() {
         <p className="text-sm font-medium">{t.batch.operation}</p>
         <div className="flex gap-2">
           {ops.map((op) => (
-            <button
+            <Button
               key={op.value}
               onClick={() => setOperation(op.value)}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                operation === op.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
+              variant={operation === op.value ? "default" : "secondary"}
             >
               {op.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      <button
+      <Button
         onClick={handleBatch}
         disabled={loading || !inputDir}
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
-        <Save className="h-4 w-4" />
+        <Save />
         {loading ? t.batch.btnLoading : t.batch.btnIdle}
-      </button>
+      </Button>
     </div>
   )
 }

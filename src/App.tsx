@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { Toaster } from "sonner"
-import { useTheme, useSettingsStore } from "@/hooks"
+import { useTheme } from "@/hooks"
+import { useSettingsStore } from "@/stores/settingsStore"
 import { useEffect } from "react"
 import { AppLayout } from "@/components/layout"
 

@@ -1,26 +1,21 @@
-import { DropZone } from "@/components/shared"
-import { useFilePicker, useQpdf } from "@/hooks"
-import { useFileStore } from "@/stores"
-import { useState, useEffect } from "react"
+import { useQpdf, useFileSelection } from "@/hooks"
 import { toast } from "sonner"
-import { ProgressOverlay } from "@/components/shared"
-import { Save, X } from "lucide-react"
+import { ProgressOverlay, DropZone } from "@/components/shared"
+import { Button } from "@/components/ui/button"
+import { Save, X, ArrowUp, ArrowDown } from "lucide-react"
 import { useI18n } from "@/i18n"
 
 export default function MergePage() {
   const { loading, runWithToast, startLoading } = useQpdf()
-  const { saveFile } = useFilePicker()
-  const [files, setFiles] = useState<string[]>([])
-  const pendingFile = useFileStore((s) => s.pendingFile)
-  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const { files, setFiles, handleDrop, saveFile } = useFileSelection(true)
   const t = useI18n()
 
-  useEffect(() => {
-    if (pendingFile) { setFiles((p) => [...p, pendingFile]); setPendingFile(null) }
-  }, [])
-
-  const handleDrop = (paths: string[]) =>
-    setFiles((prev) => [...prev, ...paths])
+  const swap = (i: number, j: number) =>
+    setFiles((p) => {
+      const next = [...p]
+      ;[next[i], next[j]] = [next[j], next[i]]
+      return next
+    })
 
   const handleMerge = async () => {
     if (files.length < 2) {
@@ -54,12 +49,29 @@ export default function MergePage() {
               <span className="truncate flex-1 text-muted-foreground">
                 {f.split("/").pop()}
               </span>
-              <button
-                onClick={() => setFiles((p) => p.filter((_, j) => j !== i))}
-                className="shrink-0 text-muted-foreground hover:text-destructive"
+              <Button
+                onClick={() => swap(i, i - 1)}
+                disabled={i === 0}
+                variant="ghost"
+                size="icon-xs"
               >
-                <X className="h-3.5 w-3.5" />
-              </button>
+                <ArrowUp />
+              </Button>
+              <Button
+                onClick={() => swap(i, i + 1)}
+                disabled={i === files.length - 1}
+                variant="ghost"
+                size="icon-xs"
+              >
+                <ArrowDown />
+              </Button>
+              <Button
+                onClick={() => setFiles((p) => p.filter((_, j) => j !== i))}
+                variant="ghost"
+                size="icon-xs"
+              >
+                <X />
+              </Button>
             </div>
           ))}
         </div>
@@ -67,14 +79,13 @@ export default function MergePage() {
       <p className="text-xs text-muted-foreground">
         {files.length} {files.length !== 1 ? t.shared.filesSelected : t.shared.fileSelected}
       </p>
-      <button
+      <Button
         onClick={handleMerge}
         disabled={loading || files.length < 2}
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
-        <Save className="h-4 w-4" />
+        <Save />
         {loading ? t.merge.btnLoading : t.merge.btnIdle}
-      </button>
+      </Button>
     </div>
   )
 }

@@ -10,11 +10,3 @@ export interface PdfInfo {
   creator: string | null
   producer: string | null
 }
-
-export interface RecentFile {
-  file_path: string
-  file_name: string
-  file_size: number
-  page_count: number
-  last_opened: number
-}

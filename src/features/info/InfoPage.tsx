@@ -1,30 +1,20 @@
 import { useState, useEffect } from "react"
-import { useQpdf, useSettingsStore } from "@/hooks"
+import { useQpdf } from "@/hooks"
+import { useSettingsStore } from "@/stores/settingsStore"
 import { useFileStore } from "@/stores"
 import { ProgressOverlay } from "@/components/shared"
 import { FileText } from "lucide-react"
 import { DropZone } from "@/components/shared"
 import { toast } from "sonner"
 import { useI18n } from "@/i18n"
-
-interface PdfInfoData {
-  page_count: number
-  file_name?: string
-  file_size?: number
-  title?: string
-  author?: string
-  creator?: string
-  producer?: string
-  creation_date?: string
-  is_encrypted?: boolean
-}
+import type { PdfInfo } from "@/types"
 
 export default function InfoPage() {
   const { loading, run } = useQpdf()
   const addRecentFile = useFileStore((s) => s.addRecentFile)
   const maxRecentFiles = useSettingsStore((s) => s.max_recent_files)
   const [file, setFile] = useState<string | null>(null)
-  const [info, setInfo] = useState<PdfInfoData | null>(null)
+  const [info, setInfo] = useState<PdfInfo | null>(null)
   const pendingFile = useFileStore((s) => s.pendingFile)
   const setPendingFile = useFileStore((s) => s.setPendingFile)
   const t = useI18n()
@@ -38,20 +28,9 @@ export default function InfoPage() {
     setFile(f)
     setInfo(null)
     try {
-      const result = await run<PdfInfoData>("get_pdf_info", { filePath: f })
+      const result = await run<PdfInfo>("get_pdf_info", { filePath: f })
       setInfo(result)
-      addRecentFile({
-        file_path: f,
-        file_name: result.file_name ?? f.split("/").pop() ?? f,
-        file_size: result.file_size ?? 0,
-        page_count: result.page_count,
-        is_encrypted: result.is_encrypted ?? false,
-        title: result.title ?? null,
-        author: result.author ?? null,
-        creation_date: result.creation_date ?? null,
-        creator: result.creator ?? null,
-        producer: result.producer ?? null,
-      }, maxRecentFiles)
+      addRecentFile(result, maxRecentFiles)
       toast.success(t.info.loaded)
     } catch {
       // run already shows error toast

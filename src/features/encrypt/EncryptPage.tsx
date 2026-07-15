@@ -1,29 +1,19 @@
-import { DropZone } from "@/components/shared"
-import { useFilePicker, useQpdf } from "@/hooks"
-import { useFileStore } from "@/stores"
-import { useState, useEffect } from "react"
+import { useQpdf, useFileSelection } from "@/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
-import { ProgressOverlay } from "@/components/shared"
+import { ProgressOverlay, DropZone } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { Lock, X, FolderOpen } from "lucide-react"
 import { useI18n } from "@/i18n"
 
 export default function EncryptPage() {
   const { loading, runWithToast, startLoading } = useQpdf()
-  const { pickDirectory } = useFilePicker()
-  const [files, setFiles] = useState<string[]>([])
+  const { files, setFiles, handleDrop, pickDirectory } = useFileSelection(true)
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [outputDir, setOutputDir] = useState<string | null>(null)
-  const pendingFile = useFileStore((s) => s.pendingFile)
-  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const [progressMsg, setProgressMsg] = useState("")
   const t = useI18n()
-
-  useEffect(() => {
-    if (pendingFile) { setFiles((p) => [...p, pendingFile]); setPendingFile(null) }
-  }, [])
-
-  const handleDrop = (paths: string[]) =>
-    setFiles((prev) => [...prev, ...paths])
 
   const handleEncrypt = async () => {
     if (files.length === 0) return toast.error(t.encrypt.errorNoFiles)
@@ -38,8 +28,10 @@ export default function EncryptPage() {
     }
     startLoading()
 
-    for (const f of files) {
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i]
       const name = f.split("/").pop()?.replace(/\.pdf$/i, "") || "file"
+      setProgressMsg(`${t.encrypt.loading} (${i + 1}/${files.length}) ${f.split("/").pop()}`)
       await runWithToast("encrypt_pdf", {
         filePath: f,
         outputPath: `${dir}/${name}_encrypted.pdf`,
@@ -48,11 +40,12 @@ export default function EncryptPage() {
         keyLength: 256,
       })
     }
+    setProgressMsg("")
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message={t.encrypt.loading} />
+      <ProgressOverlay loading={loading} message={progressMsg || t.encrypt.loading} />
       <div>
         <h1 className="text-2xl font-bold">{t.encrypt.title}</h1>
         <p className="text-sm text-muted-foreground">
@@ -67,12 +60,13 @@ export default function EncryptPage() {
               <span className="truncate flex-1 text-muted-foreground">
                 {f.split("/").pop()}
               </span>
-              <button
+              <Button
                 onClick={() => setFiles((p) => p.filter((_, j) => j !== i))}
-                className="shrink-0 text-muted-foreground hover:text-destructive"
+                variant="ghost"
+                size="icon-xs"
               >
-                <X className="h-3.5 w-3.5" />
-              </button>
+                <X />
+              </Button>
             </div>
           ))}
         </div>
@@ -94,20 +88,20 @@ export default function EncryptPage() {
         onChange={(e) => setConfirm(e.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
-      <button
+      <Button
         onClick={async () => {
           const dir = await pickDirectory()
           if (dir) setOutputDir(dir)
         }}
-        className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+        variant="outline"
       >
-        <FolderOpen className="h-4 w-4" />
+        <FolderOpen />
         {outputDir ? outputDir.split("/").pop() : t.shared.chooseOutputFolder}
-      </button>
+      </Button>
       {outputDir && (
         <p className="truncate text-xs text-muted-foreground">{outputDir}</p>
       )}
-      <button
+      <Button
         onClick={handleEncrypt}
         disabled={
           loading ||
@@ -115,11 +109,10 @@ export default function EncryptPage() {
           !password ||
           password !== confirm
         }
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
-        <Lock className="h-4 w-4" />
+        <Lock />
         {loading ? t.encrypt.btnLoading : t.encrypt.btnIdle}
-      </button>
+      </Button>
     </div>
   )
 }

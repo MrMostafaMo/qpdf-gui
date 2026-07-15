@@ -1,4 +1,5 @@
-import { useSettingsStore, useTheme } from "@/hooks"
+import { useTheme } from "@/hooks"
+import { useSettingsStore } from "@/stores/settingsStore"
 import { useI18n, type Locale } from "@/i18n"
 
 const LANGUAGES: { value: Locale; label: string }[] = [

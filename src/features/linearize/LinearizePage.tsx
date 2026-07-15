@@ -1,25 +1,14 @@
-import { DropZone } from "@/components/shared"
-import { useFilePicker, useQpdf } from "@/hooks"
-import { useFileStore } from "@/stores"
-import { useState, useEffect } from "react"
+import { useQpdf, useFileSelection } from "@/hooks"
 import { toast } from "sonner"
-import { ProgressOverlay } from "@/components/shared"
+import { ProgressOverlay, DropZone } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { Zap } from "lucide-react"
 import { useI18n } from "@/i18n"
 
 export default function LinearizePage() {
   const { loading, runWithToast, startLoading } = useQpdf()
-  const { saveFile } = useFilePicker()
-  const [file, setFile] = useState<string | null>(null)
-  const pendingFile = useFileStore((s) => s.pendingFile)
-  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const { file, handleDrop, saveFile } = useFileSelection()
   const t = useI18n()
-
-  useEffect(() => {
-    if (pendingFile) { setFile(pendingFile); setPendingFile(null) }
-  }, [])
-
-  const handleDrop = (paths: string[]) => setFile(paths[0])
 
   const handleLinearize = async () => {
     if (!file) return toast.error(t.linearize.errorFile)
@@ -47,14 +36,13 @@ export default function LinearizePage() {
       {file && (
         <p className="truncate text-sm text-muted-foreground">{file}</p>
       )}
-      <button
+      <Button
         onClick={handleLinearize}
         disabled={loading || !file}
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
-        <Zap className="h-4 w-4" />
+        <Zap />
         {loading ? t.linearize.btnLoading : t.linearize.btnIdle}
-      </button>
+      </Button>
     </div>
   )
 }

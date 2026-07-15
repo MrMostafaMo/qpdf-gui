@@ -18,16 +18,9 @@ const makeFile = (path: string, page_count = 1): PdfInfo => ({
 describe("fileStore", () => {
   beforeEach(() => {
     useFileStore.setState({
-      currentFile: null,
       recentFiles: [],
       pendingFile: null,
     })
-  })
-
-  it("sets current file", () => {
-    const file = makeFile("/tmp/test.pdf")
-    useFileStore.getState().setCurrentFile(file)
-    expect(useFileStore.getState().currentFile).toEqual(file)
   })
 
   it("adds recent file", () => {

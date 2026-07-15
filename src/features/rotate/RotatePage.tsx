@@ -1,29 +1,18 @@
-import { DropZone } from "@/components/shared"
-import { useFilePicker, useQpdf } from "@/hooks"
-import { useFileStore } from "@/stores"
-import { useState, useEffect } from "react"
+import { useQpdf, useFileSelection } from "@/hooks"
+import { useState } from "react"
 import { toast } from "sonner"
-import { ProgressOverlay } from "@/components/shared"
+import { ProgressOverlay, DropZone } from "@/components/shared"
+import { Button } from "@/components/ui/button"
 import { Save } from "lucide-react"
 import { isValidPageRange } from "@/utils/validators"
 import { useI18n } from "@/i18n"
 
 export default function RotatePage() {
   const { loading, runWithToast, startLoading } = useQpdf()
-  const { saveFile } = useFilePicker()
-  const [file, setFile] = useState<string | null>(null)
+  const { file, handleDrop, saveFile } = useFileSelection()
   const [angle, setAngle] = useState<90 | 180 | 270>(90)
   const [pages, setPages] = useState("")
-  const pendingFile = useFileStore((s) => s.pendingFile)
-  const setPendingFile = useFileStore((s) => s.setPendingFile)
   const t = useI18n()
-
-  useEffect(() => {
-    if (pendingFile) { setFile(pendingFile); setPendingFile(null) }
-  }, [])
-
-  const handleDrop = (paths: string[]) => setFile(paths[0])
-  const pagesValid = !pages || isValidPageRange(pages)
 
   const handleRotate = async () => {
     if (!file) return toast.error(t.rotate.errorFile)
@@ -59,17 +48,13 @@ export default function RotatePage() {
       )}
       <div className="flex gap-2">
         {[90, 180, 270].map((a) => (
-          <button
+          <Button
             key={a}
             onClick={() => setAngle(a as 90 | 180 | 270)}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              angle === a
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            }`}
+            variant={angle === a ? "default" : "secondary"}
           >
             {a}°
-          </button>
+          </Button>
         ))}
       </div>
       <input
@@ -79,14 +64,13 @@ export default function RotatePage() {
         onChange={(e) => setPages(e.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
-      <button
+      <Button
         onClick={handleRotate}
         disabled={loading || !file || !pagesValid}
-        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
-        <Save className="h-4 w-4" />
+        <Save />
         {loading ? t.rotate.btnLoading : t.rotate.btnIdle}
-      </button>
+      </Button>
     </div>
   )
 }

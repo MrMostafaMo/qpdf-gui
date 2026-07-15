@@ -57,6 +57,9 @@ const en = {
     filesSelected: "files selected",
     fileSelected: "file selected",
     chooseOutputFolder: "Choose output folder",
+    result: "Result",
+    before: "Before",
+    after: "After",
   },
 
   // Dashboard
