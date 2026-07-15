@@ -4,6 +4,16 @@ Cross-platform desktop PDF toolbox powered by [qpdf](https://qpdf.readthedocs.io
 
 Built with **Tauri v2** (Rust) + **React 19** + **TypeScript** + **TailwindCSS v4**.
 
+## Download
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/MrMostafaMo/qpdf-gui/releases/latest).
+
+| Platform | Format |
+|----------|--------|
+| Linux | `.deb` (Ubuntu/Debian), `.rpm` (Fedora/RHEL) |
+| Windows | `.msi` |
+| macOS | `.dmg` (Apple Silicon) |
+
 ## Features
 
 | Operation | Description |
