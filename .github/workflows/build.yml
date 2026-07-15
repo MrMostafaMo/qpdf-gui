@@ -10,6 +10,9 @@ on:
 permissions:
   contents: write
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   build:
     strategy:
@@ -22,9 +25,9 @@ jobs:
           - platform: windows-latest
             args: ""
             target: x86_64-pc-windows-msvc
-          - platform: macos-13
+          - platform: macos-14
             args: ""
-            target: x86_64-apple-darwin
+            target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
@@ -43,7 +46,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-14' && 'aarch64-apple-darwin' || '' }}
 
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -76,7 +79,7 @@ jobs:
           ls src-tauri/resources/
 
       - name: Build qpdf from source (macOS)
-        if: matrix.platform == 'macos-13'
+        if: matrix.platform == 'macos-14'
         run: |
           brew install cmake
           QPDF_VERSION="12.3.2"
