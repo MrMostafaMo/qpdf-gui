@@ -68,7 +68,7 @@ jobs:
         shell: bash
         run: |
           curl -sL "https://github.com/qpdf/qpdf/releases/download/v12.3.2/qpdf-12.3.2-msvc64.zip" -o qpdf-win.zip
-          7z x qpdf-win.zip -oqpdf-extract -q
+          7z x qpdf-win.zip -oqpdf-extract
           mkdir -p src-tauri/resources
           cp qpdf-extract/qpdf-12.3.2-msvc64/bin/qpdf.exe src-tauri/resources/qpdf.exe
           cp qpdf-extract/qpdf-12.3.2-msvc64/bin/*.dll src-tauri/resources/
