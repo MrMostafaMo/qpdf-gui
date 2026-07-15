@@ -14,6 +14,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_updater::Builder::default().build())
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             APP_HANDLE.set(app.handle().clone()).ok();
             if cfg!(debug_assertions) {

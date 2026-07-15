@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react"
 import { invoke } from "@tauri-apps/api/core"
+import { getCurrentWindow } from "@tauri-apps/api/window"
+import { sendNotification } from "@tauri-apps/plugin-notification"
 import type { OperationResult } from "@/types"
 import { toast } from "sonner"
 import { useLogStore } from "@/components/shared/OperationLogs"
@@ -62,11 +64,23 @@ export function useQpdf() {
           toast.error(result.message)
           updateLog(logId, { status: "error", message: result.message })
         }
+        // Notify when window is not focused
+        const focused = await getCurrentWindow().isFocused()
+        if (!focused) {
+          sendNotification({
+            title: result.success ? "Operation Complete" : "Operation Failed",
+            body: result.message,
+          })
+        }
         return result
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         toast.error(message)
         updateLog(logId, { status: "error", message })
+        const focused = await getCurrentWindow().isFocused()
+        if (!focused) {
+          sendNotification({ title: "Operation Failed", body: message })
+        }
         throw error
       } finally {
         setAllLoading(false)
