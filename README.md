@@ -10,7 +10,8 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 | Platform | Format |
 |----------|--------|
-| Linux | `.deb` (Ubuntu/Debian), `.rpm` (Fedora/RHEL) |
+| Linux x86_64 | `.deb` (Ubuntu/Debian), `.rpm` (Fedora/RHEL), `.AppImage` (portable) |
+| Linux ARM64 | `.deb`, `.rpm` |
 | Windows | `.msi` |
 | macOS | `.dmg` (Apple Silicon) |
 
@@ -108,7 +109,7 @@ qpdf-gui/
 
 ## CI/CD
 
-GitHub Actions builds for Linux (.deb, .rpm), Windows (.msi), and macOS (.dmg, Apple Silicon). Auto-update support via Tauri updater with signed releases.
+GitHub Actions builds for Linux x86_64 (.deb, .rpm, .AppImage), Linux ARM64 (.deb, .rpm), Windows (.msi), and macOS (.dmg, Apple Silicon). Auto-update support via Tauri updater with signed releases.
 
 ## Tests
 

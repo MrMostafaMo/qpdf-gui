@@ -19,9 +19,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: ubuntu-22.04
-            args: "--bundles deb,rpm"
+          - platform: ubuntu-24.04
+            args: "--bundles deb,rpm,appimage"
             target: x86_64-unknown-linux-gnu
+          - platform: ubuntu-24.04-arm
+            args: "--bundles deb,rpm"
+            target: aarch64-unknown-linux-gnu
           - platform: windows-latest
             args: ""
             target: x86_64-pc-windows-msvc
@@ -46,16 +49,16 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-14' && 'aarch64-apple-darwin' || '' }}
+          targets: ${{ matrix.target }}
 
       - name: Install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
 
-      - name: Download qpdf (Linux)
-        if: matrix.platform == 'ubuntu-22.04'
+      - name: Download qpdf (Linux x86_64)
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
         run: |
           curl -sL "https://github.com/qpdf/qpdf/releases/download/v12.3.2/qpdf-12.3.2-bin-linux-x86_64.zip" -o qpdf-linux.zip
           unzip -q qpdf-linux.zip -d qpdf-extract
@@ -64,6 +67,18 @@ jobs:
           cp qpdf-extract/bin/qpdf src-tauri/resources/qpdf
           cp -a qpdf-extract/lib/* src-tauri/resources/
           rm -rf qpdf-extract qpdf-linux.zip
+          ls -la src-tauri/resources/
+
+      - name: Download qpdf (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          curl -sL "https://github.com/qpdf/qpdf/releases/download/v12.3.2/qpdf-12.3.2-bin-linux-aarch64.zip" -o qpdf-linux-arm64.zip
+          unzip -q qpdf-linux-arm64.zip -d qpdf-extract
+          chmod +x qpdf-extract/bin/qpdf
+          mkdir -p src-tauri/resources
+          cp qpdf-extract/bin/qpdf src-tauri/resources/qpdf
+          cp -a qpdf-extract/lib/* src-tauri/resources/
+          rm -rf qpdf-extract qpdf-linux-arm64.zip
           ls -la src-tauri/resources/
 
       - name: Download qpdf (Windows)

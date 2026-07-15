@@ -181,7 +181,7 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 ## CI/CD
 
 - GitHub Actions: `.github/workflows/build.yml`
-- Matrix: Linux (ubuntu-22.04, .deb + .rpm), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
+- Matrix: Linux x86_64 (ubuntu-24.04, .deb + .rpm + .AppImage), Linux ARM64 (ubuntu-24.04-arm, .deb + .rpm), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
 - qpdf is bundled: CI downloads prebuilt binaries (Linux/Windows) or compiles from source (macOS) into `src-tauri/resources/`
 - Auto-update: signing key in `src-tauri/updater.key` (gitignored), GitHub releases with `latest.json`
 - `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true` suppresses Node.js 20 deprecation warning
@@ -246,4 +246,4 @@ git tag v<VERSION> && git push origin v<VERSION>
 - No PDF viewer/renderer — manipulate only
 - qpdf is bundled with the app (no separate install needed)
 - macOS build is Apple Silicon (arm64), not universal binary
-- AppImage skipped on Linux (linuxdeploy broken on ubuntu-22.04)
+- Windows build is x86_64 only
