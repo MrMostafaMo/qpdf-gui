@@ -13,6 +13,7 @@ export default function RotatePage() {
   const [angle, setAngle] = useState<90 | 180 | 270>(90)
   const [pages, setPages] = useState("")
   const t = useI18n()
+  const pagesValid = !pages || isValidPageRange(pages)
 
   const handleRotate = async () => {
     if (!file) return toast.error(t.rotate.errorFile)
