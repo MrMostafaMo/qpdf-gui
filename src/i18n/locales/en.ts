@@ -218,6 +218,7 @@ const en = {
     yes: "Yes",
     no: "No",
     empty: "Drop a PDF to view its properties",
+    openInViewer: "Open in System Viewer",
   },
 
   // Batch

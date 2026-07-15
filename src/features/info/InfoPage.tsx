@@ -3,10 +3,12 @@ import { useQpdf } from "@/hooks"
 import { useSettingsStore } from "@/stores/settingsStore"
 import { useFileStore } from "@/stores"
 import { ProgressOverlay } from "@/components/shared"
-import { FileText } from "lucide-react"
+import { FileText, ExternalLink } from "lucide-react"
 import { DropZone } from "@/components/shared"
 import { toast } from "sonner"
 import { useI18n } from "@/i18n"
+import { open } from "@tauri-apps/plugin-shell"
+import { Button } from "@/components/ui/button"
 import type { PdfInfo } from "@/types"
 
 export default function InfoPage() {
@@ -67,6 +69,12 @@ export default function InfoPage() {
             value={info.is_encrypted ? t.info.yes : t.info.no}
           />
         </div>
+      )}
+      {file && (
+        <Button onClick={() => open(file)} variant="outline">
+          <ExternalLink />
+          {t.info.openInViewer}
+        </Button>
       )}
       {!info && !loading && (
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border py-12 text-center">

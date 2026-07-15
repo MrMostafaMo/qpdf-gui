@@ -204,6 +204,7 @@ const ar: TranslationKeys = {
     yes: "نعم",
     no: "لا",
     empty: "أسقط ملف PDF لعرض خصائصه",
+    openInViewer: "فتح في مستعرض النظام",
   },
 
   batch: {
