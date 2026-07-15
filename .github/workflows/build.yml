@@ -72,13 +72,25 @@ jobs:
       - name: Download qpdf (Linux ARM64)
         if: matrix.target == 'aarch64-unknown-linux-gnu'
         run: |
-          curl -sL "https://github.com/qpdf/qpdf/releases/download/v12.3.2/qpdf-12.3.2-bin-linux-aarch64.zip" -o qpdf-linux-arm64.zip
-          unzip -q qpdf-linux-arm64.zip -d qpdf-extract
-          chmod +x qpdf-extract/bin/qpdf
+          sudo apt-get install -y cmake libgcrypt20-dev
+          QPDF_VERSION="12.3.2"
+          curl -sL "https://github.com/qpdf/qpdf/releases/download/v${QPDF_VERSION}/qpdf-${QPDF_VERSION}.tar.gz" -o qpdf-src.tar.gz
+          tar xzf qpdf-src.tar.gz
+
+          mkdir build && cd build
+          cmake "../qpdf-${QPDF_VERSION}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_STATIC_LIBS=OFF \
+            -DREQUIRE_CRYPTO_NATIVE=OFF
+          cmake --build . --config Release -j$(nproc)
+          cd ..
+
           mkdir -p src-tauri/resources
-          cp qpdf-extract/bin/qpdf src-tauri/resources/qpdf
-          cp -a qpdf-extract/lib/* src-tauri/resources/
-          rm -rf qpdf-extract qpdf-linux-arm64.zip
+          cp build/qpdf/qpdf src-tauri/resources/qpdf
+          chmod +x src-tauri/resources/qpdf
+          cp build/libqpdf/libqpdf.so* src-tauri/resources/
+
+          rm -rf qpdf-src.tar.gz qpdf-${QPDF_VERSION} build
           ls -la src-tauri/resources/
 
       - name: Download qpdf (Windows)
