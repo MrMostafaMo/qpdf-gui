@@ -12,8 +12,6 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  APPIMAGE_EXTRACT_AND_RUN: "1"
-  NO_STRIP: "true"
 
 jobs:
   build:
@@ -22,10 +20,10 @@ jobs:
       matrix:
         include:
           - platform: ubuntu-24.04
-            args: "--bundles deb,rpm,appimage"
+            args: "--bundles deb,rpm"
             target: x86_64-unknown-linux-gnu
           - platform: ubuntu-24.04-arm
-            args: "--bundles deb,rpm,appimage"
+            args: "--bundles deb,rpm"
             target: aarch64-unknown-linux-gnu
           - platform: windows-latest
             args: ""
