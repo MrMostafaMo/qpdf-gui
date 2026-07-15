@@ -62,6 +62,9 @@ qpdf-gui/
 │   │   └── utils/error.rs        # AppError enum
 │   ├── capabilities/default.json # Plugin permissions
 │   └── tauri.conf.json           # Window: 1200x800, min 900x600, bundled resources
+├── flatpak/                      # Flatpak manifest + metadata
+├── snap/                         # Snap packaging
+├── aur/                          # Arch User Repository (PKGBUILD)
 ├── logo.png                      # Source image for app icon
 └── package.json
 ```
@@ -181,7 +184,8 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 ## CI/CD
 
 - GitHub Actions: `.github/workflows/build.yml`
-- Matrix: Linux x86_64 (ubuntu-24.04, .deb + .rpm + .AppImage), Linux ARM64 (ubuntu-24.04-arm, .deb + .rpm), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
+- Matrix: Linux x86_64 (ubuntu-24.04, .deb + .rpm + .AppImage), Linux ARM64 (ubuntu-24.04-arm, .deb + .rpm + .AppImage), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
+- Also available via: Flatpak (`flatpak/`), Snap (`snap/`), AUR (`aur/`)
 - qpdf is bundled: CI downloads prebuilt binaries (Linux/Windows) or compiles from source (macOS) into `src-tauri/resources/`
 - Auto-update: signing key in `src-tauri/updater.key` (gitignored), GitHub releases with `latest.json`
 - `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true` suppresses Node.js 20 deprecation warning

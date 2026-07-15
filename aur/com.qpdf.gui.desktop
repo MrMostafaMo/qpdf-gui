@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=QPDF GUI
+Comment=Cross-platform desktop PDF toolbox powered by qpdf
+Exec=qpdf-gui
+Icon=com.qpdf.gui
+Type=Application
+Categories=Utility;Office;
+MimeType=application/pdf;
+Terminal=false
+StartupNotify=true

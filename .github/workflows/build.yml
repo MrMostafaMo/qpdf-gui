@@ -23,7 +23,7 @@ jobs:
             args: "--bundles deb,rpm,appimage"
             target: x86_64-unknown-linux-gnu
           - platform: ubuntu-24.04-arm
-            args: "--bundles deb,rpm"
+            args: "--bundles deb,rpm,appimage"
             target: aarch64-unknown-linux-gnu
           - platform: windows-latest
             args: ""

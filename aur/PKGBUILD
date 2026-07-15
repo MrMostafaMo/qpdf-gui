@@ -1,0 +1,25 @@
+# Maintainer: Mostafa Mohamed <mrMostafaMo>
+pkgname=qpdf-gui
+pkgver=1.3.0
+pkgrel=1
+pkgdesc='Cross-platform desktop PDF toolbox powered by qpdf'
+arch=('x86_64' 'aarch64')
+url='https://github.com/MrMostafaMo/qpdf-gui'
+license=('MIT')
+depends=('glibc' 'gcc-libs' 'webkit2gtk' 'gtk3')
+makedepends=('pnpm' 'rust' 'nodejs')
+source=("$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "$pkgname-$pkgver"
+  pnpm install --frozen-lockfile
+  pnpm tauri build
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 src-tauri/target/release/qpdf-gui "$pkgdir/usr/bin/qpdf-gui"
+  install -Dm644 aur/com.qpdf.gui.desktop "$pkgdir/usr/share/applications/com.qpdf.gui.desktop"
+  install -Dm644 logo.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/com.qpdf.gui.png"
+}

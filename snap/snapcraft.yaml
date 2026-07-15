@@ -1,0 +1,45 @@
+name: qpdf-gui
+version: '1.3.0'
+summary: Cross-platform desktop PDF toolbox
+description: |
+  PDF manipulation powered by qpdf. Supports extract, merge, split,
+  rotate, delete, encrypt, decrypt, optimize, linearize, and batch ops.
+  Arabic and English interface with desktop notifications.
+
+grade: stable
+confinement: strict
+base: core24
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+apps:
+  qpdf-gui:
+    command: qpdf-gui
+    extensions: [gnome]
+    plugs:
+      - home
+      - removable-media
+    desktop: usr/share/applications/qpdf-gui.desktop
+
+parts:
+  qpdf-gui:
+    plugin: rust
+    source: .
+    build-snaps:
+      - node/22/stable
+      - pnpm/latest/stable
+    build-packages:
+      - libwebkit2gtk-4.1-dev
+      - libgtk-3-dev
+      - patchelf
+      - libappindicator3-dev
+      - librsvg2-dev
+    override-build: |
+      pnpm install --frozen-lockfile
+      pnpm tauri build
+      cp src-tauri/target/release/qpdf-gui $SNAPCRAFT_PART_INSTALL/bin/
+      mkdir -p $SNAPCRAFT_PART_INSTALL/share/applications
+      cp snap/gui/qpdf-gui.desktop $SNAPCRAFT_PART_INSTALL/share/applications/
+      mkdir -p $SNAPCRAFT_PART_INSTALL/share/icons/hicolor/512x512/apps
+      cp logo.png $SNAPCRAFT_PART_INSTALL/share/icons/hicolor/512x512/apps/qpdf-gui.png

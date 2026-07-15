@@ -11,9 +11,17 @@ Download the latest release for your platform from [GitHub Releases](https://git
 | Platform | Format |
 |----------|--------|
 | Linux x86_64 | `.deb` (Ubuntu/Debian), `.rpm` (Fedora/RHEL), `.AppImage` (portable) |
-| Linux ARM64 | `.deb`, `.rpm` |
+| Linux ARM64 | `.deb`, `.rpm`, `.AppImage` |
 | Windows | `.msi` |
 | macOS | `.dmg` (Apple Silicon) |
+
+### Linux Package Managers
+
+| Manager | Install Command |
+|---------|----------------|
+| Flatpak | `flatpak install com.qpdf.gui` |
+| Snap | `snap install qpdf-gui` |
+| AUR (Arch) | `yay -S qpdf-gui` |
 
 ## Features
 
@@ -104,12 +112,15 @@ qpdf-gui/
 │       ├── commands/       # Tauri IPC commands
 │       ├── services/       # qpdf CLI wrapper
 │       └── models/         # Data models
+├── flatpak/                # Flatpak manifest + metadata
+├── snap/                   # Snap packaging
+├── aur/                    # Arch User Repository (PKGBUILD)
 └── package.json
 ```
 
 ## CI/CD
 
-GitHub Actions builds for Linux x86_64 (.deb, .rpm, .AppImage), Linux ARM64 (.deb, .rpm), Windows (.msi), and macOS (.dmg, Apple Silicon). Auto-update support via Tauri updater with signed releases.
+GitHub Actions builds for Linux x86_64 (.deb, .rpm, .AppImage), Linux ARM64 (.deb, .rpm, .AppImage), Windows (.msi), and macOS (.dmg, Apple Silicon). Also available via Flatpak, Snap, and AUR. Auto-update support via Tauri updater with signed releases.
 
 ## Tests
 
