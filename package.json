@@ -5,6 +5,7 @@
   "description": "Cross-platform desktop PDF toolbox powered by qpdf",
   "author": "Mostafa Mohamed",
   "license": "MIT",
+  "packageManager": "pnpm@11.13.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
