@@ -17,14 +17,14 @@ jobs:
       matrix:
         include:
           - platform: ubuntu-22.04
-            args: ""
+            args: "--bundles deb,rpm"
             target: x86_64-unknown-linux-gnu
           - platform: windows-latest
             args: ""
             target: x86_64-pc-windows-msvc
-          - platform: macos-latest
-            args: "--target universal-apple-darwin"
-            target: universal-apple-darwin
+          - platform: macos-13
+            args: ""
+            target: x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
@@ -43,7 +43,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
 
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -65,6 +65,7 @@ jobs:
 
       - name: Download qpdf (Windows)
         if: matrix.platform == 'windows-latest'
+        shell: bash
         run: |
           curl -sL "https://github.com/qpdf/qpdf/releases/download/v12.3.2/qpdf-12.3.2-msvc64.zip" -o qpdf-win.zip
           7z x qpdf-win.zip -oqpdf-extract -q
@@ -74,47 +75,28 @@ jobs:
           rm -rf qpdf-extract qpdf-win.zip
           ls src-tauri/resources/
 
-      - name: Build qpdf from source (macOS universal)
-        if: matrix.platform == 'macos-latest'
+      - name: Build qpdf from source (macOS)
+        if: matrix.platform == 'macos-13'
         run: |
           brew install cmake
           QPDF_VERSION="12.3.2"
           curl -sL "https://github.com/qpdf/qpdf/releases/download/v${QPDF_VERSION}/qpdf-${QPDF_VERSION}.tar.gz" -o qpdf-src.tar.gz
           tar xzf qpdf-src.tar.gz
 
-          # Build for arm64
-          mkdir build-arm64 && cd build-arm64
-          arch -arm64 cmake "../qpdf-${QPDF_VERSION}" \
+          mkdir build && cd build
+          cmake "../qpdf-${QPDF_VERSION}" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_STATIC_LIBS=OFF \
             -DREQUIRE_CRYPTO_NATIVE=OFF
-          arch -arm64 cmake --build . --config Release -j$(sysctl -n hw.ncpu)
+          cmake --build . --config Release -j$(sysctl -n hw.ncpu)
           cd ..
 
-          # Build for x86_64
-          mkdir build-x86_64 && cd build-x86_64
-          arch -x86_64 cmake "../qpdf-${QPDF_VERSION}" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_STATIC_LIBS=OFF \
-            -DREQUIRE_CRYPTO_NATIVE=OFF
-          arch -x86_64 cmake --build . --config Release -j$(sysctl -n hw.ncpu)
-          cd ..
-
-          # Create universal binary
           mkdir -p src-tauri/resources
-          lipo -create \
-            build-arm64/qpdf/qpdf \
-            build-x86_64/qpdf/qpdf \
-            -output src-tauri/resources/qpdf
+          cp build/qpdf/qpdf src-tauri/resources/qpdf
           chmod +x src-tauri/resources/qpdf
+          cp build/libqpdf/libqpdf.dylib src-tauri/resources/
 
-          # Copy shared libraries for both architectures
-          lipo -create \
-            build-arm64/libqpdf/libqpdf.dylib \
-            build-x86_64/libqpdf/libqpdf.dylib \
-            -output src-tauri/resources/libqpdf.dylib
-
-          rm -rf qpdf-src.tar.gz qpdf-${QPDF_VERSION} build-arm64 build-x86_64
+          rm -rf qpdf-src.tar.gz qpdf-${QPDF_VERSION} build
           ls -la src-tauri/resources/
 
       - name: Install frontend dependencies
