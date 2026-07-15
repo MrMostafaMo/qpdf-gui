@@ -1,7 +1,7 @@
 {
   "name": "qpdf-gui",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Cross-platform desktop PDF toolbox powered by qpdf",
   "author": "Mostafa Mohamed",
   "license": "MIT",

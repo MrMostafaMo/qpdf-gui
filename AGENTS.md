@@ -219,6 +219,20 @@ Encrypt and Decrypt support multiple files:
 - `src/stores/__tests__/fileStore.test.ts` — 7 tests
 - `src/stores/__tests__/appStore.test.ts` — 4 tests
 
+## Versioning
+
+To release a new version, bump the version in ALL THREE places:
+1. `package.json` — `"version"`
+2. `src-tauri/tauri.conf.json` — `"version"`
+3. `src-tauri/Cargo.toml` — `version`
+
+Then commit, tag, and push:
+```bash
+git tag v<VERSION> && git push origin v<VERSION>
+```
+
+**The git tag alone does NOT set the installer version** — it only triggers CI to create a release. The installer filename and metadata come from the three files above.
+
 ## Adding a New Command
 
 1. **Rust:** Add function in `src-tauri/src/commands/mod.rs` with `#[tauri::command]`
