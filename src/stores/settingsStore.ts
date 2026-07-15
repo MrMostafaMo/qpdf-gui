@@ -42,6 +42,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         theme: current.theme,
         remember_recent_files: current.remember_recent_files,
         max_recent_files: current.max_recent_files,
+        language: current.language,
       })
       await store.save()
     } catch {

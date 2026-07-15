@@ -1,10 +1,12 @@
 import { DropZone } from "@/components/shared"
 import { useFilePicker, useQpdf } from "@/hooks"
-import { useState } from "react"
+import { useFileStore } from "@/stores"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
 import { Save } from "lucide-react"
 import { isValidPageRange } from "@/utils/validators"
+import { useI18n } from "@/i18n"
 
 export default function RotatePage() {
   const { loading, runWithToast, startLoading } = useQpdf()
@@ -12,14 +14,21 @@ export default function RotatePage() {
   const [file, setFile] = useState<string | null>(null)
   const [angle, setAngle] = useState<90 | 180 | 270>(90)
   const [pages, setPages] = useState("")
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
+
+  useEffect(() => {
+    if (pendingFile) { setFile(pendingFile); setPendingFile(null) }
+  }, [])
 
   const handleDrop = (paths: string[]) => setFile(paths[0])
   const pagesValid = !pages || isValidPageRange(pages)
 
   const handleRotate = async () => {
-    if (!file) return toast.error("Select a PDF file")
+    if (!file) return toast.error(t.rotate.errorFile)
     if (pages && !isValidPageRange(pages)) {
-      toast.error("Invalid page range format (e.g. 1-5,8,10-12)")
+      toast.error(t.rotate.errorInvalid)
       return
     }
     startLoading()
@@ -37,11 +46,11 @@ export default function RotatePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message="Rotating pages..." />
+      <ProgressOverlay loading={loading} message={t.rotate.loading} />
       <div>
-        <h1 className="text-2xl font-bold">Rotate Pages</h1>
+        <h1 className="text-2xl font-bold">{t.rotate.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Rotate pages in a PDF by 90°, 180°, or 270°
+          {t.rotate.subtitle}
         </p>
       </div>
       <DropZone onFilesSelected={handleDrop} />
@@ -65,7 +74,7 @@ export default function RotatePage() {
       </div>
       <input
         type="text"
-        placeholder="Pages (leave blank for all)"
+        placeholder={t.rotate.placeholder}
         value={pages}
         onChange={(e) => setPages(e.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -76,7 +85,7 @@ export default function RotatePage() {
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
-        {loading ? "Rotating..." : "Save Rotated File"}
+        {loading ? t.rotate.btnLoading : t.rotate.btnIdle}
       </button>
     </div>
   )

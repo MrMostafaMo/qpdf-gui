@@ -1,10 +1,11 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQpdf, useSettingsStore } from "@/hooks"
 import { useFileStore } from "@/stores"
 import { ProgressOverlay } from "@/components/shared"
 import { FileText } from "lucide-react"
 import { DropZone } from "@/components/shared"
 import { toast } from "sonner"
+import { useI18n } from "@/i18n"
 
 interface PdfInfoData {
   page_count: number
@@ -24,6 +25,13 @@ export default function InfoPage() {
   const maxRecentFiles = useSettingsStore((s) => s.max_recent_files)
   const [file, setFile] = useState<string | null>(null)
   const [info, setInfo] = useState<PdfInfoData | null>(null)
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
+
+  useEffect(() => {
+    if (pendingFile) { handleDrop([pendingFile]); setPendingFile(null) }
+  }, [])
 
   const handleDrop = async (paths: string[]) => {
     const f = paths[0]
@@ -44,7 +52,7 @@ export default function InfoPage() {
         creator: result.creator ?? null,
         producer: result.producer ?? null,
       }, maxRecentFiles)
-      toast.success("PDF info loaded")
+      toast.success(t.info.loaded)
     } catch {
       // run already shows error toast
     }
@@ -52,11 +60,11 @@ export default function InfoPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message="Reading PDF info..." />
+      <ProgressOverlay loading={loading} message={t.info.loading} />
       <div>
-        <h1 className="text-2xl font-bold">PDF Info</h1>
+        <h1 className="text-2xl font-bold">{t.info.title}</h1>
         <p className="text-sm text-muted-foreground">
-          View metadata and properties of a PDF file
+          {t.info.subtitle}
         </p>
       </div>
       <DropZone onFilesSelected={handleDrop} />
@@ -65,19 +73,19 @@ export default function InfoPage() {
       )}
       {info && (
         <div className="space-y-2 rounded-md border border-border p-4">
-          <InfoRow label="Pages" value={String(info.page_count)} />
-          {info.file_name && <InfoRow label="File" value={info.file_name} />}
+          <InfoRow label={t.info.pages} value={String(info.page_count)} />
+          {info.file_name && <InfoRow label={t.info.file} value={info.file_name} />}
           {info.file_size != null && (
-            <InfoRow label="Size" value={`${(info.file_size / 1024).toFixed(1)} KB`} />
+            <InfoRow label={t.info.size} value={`${(info.file_size / 1024).toFixed(1)} KB`} />
           )}
-          {info.title && <InfoRow label="Title" value={info.title} />}
-          {info.author && <InfoRow label="Author" value={info.author} />}
-          {info.creator && <InfoRow label="Creator" value={info.creator} />}
-          {info.producer && <InfoRow label="Producer" value={info.producer} />}
-          {info.creation_date && <InfoRow label="Created" value={info.creation_date} />}
+          {info.title && <InfoRow label={t.info.title_} value={info.title} />}
+          {info.author && <InfoRow label={t.info.author} value={info.author} />}
+          {info.creator && <InfoRow label={t.info.creator} value={info.creator} />}
+          {info.producer && <InfoRow label={t.info.producer} value={info.producer} />}
+          {info.creation_date && <InfoRow label={t.info.created} value={info.creation_date} />}
           <InfoRow
-            label="Encrypted"
-            value={info.is_encrypted ? "Yes" : "No"}
+            label={t.info.encrypted}
+            value={info.is_encrypted ? t.info.yes : t.info.no}
           />
         </div>
       )}
@@ -85,7 +93,7 @@ export default function InfoPage() {
         <div className="flex flex-col items-center gap-3 rounded-md border border-dashed border-border py-12 text-center">
           <FileText className="h-8 w-8 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
-            Drop a PDF to view its properties
+            {t.info.empty}
           </p>
         </div>
       )}

@@ -21,10 +21,16 @@ import SettingsPage from "@/features/settings/SettingsPage"
 export default function App() {
   useTheme()
   const loadSettings = useSettingsStore((s) => s.loadSettings)
+  const language = useSettingsStore((s) => s.language)
 
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
+
+  useEffect(() => {
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr"
+    document.documentElement.lang = language
+  }, [language])
 
   return (
     <BrowserRouter>

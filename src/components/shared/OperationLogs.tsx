@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { CheckCircle, XCircle, Clock } from "lucide-react"
+import { useI18n } from "@/i18n"
 
 export interface LogEntry {
   id: string
@@ -51,6 +52,7 @@ const STATUS_ICONS = {
 
 export function OperationLogs() {
   const { entries, clearLogs } = useLogStore()
+  const t = useI18n()
 
   if (entries.length === 0) return null
 
@@ -58,13 +60,13 @@ export function OperationLogs() {
     <div className="rounded-lg border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border px-4 py-2">
         <h3 className="text-xs font-medium uppercase text-muted-foreground">
-          Operation Log
+          {t.shared.operationLog}
         </h3>
         <button
           onClick={clearLogs}
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Clear
+          {t.shared.clear}
         </button>
       </div>
       <div className="max-h-60 overflow-y-auto">

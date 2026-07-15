@@ -1,9 +1,11 @@
 import { DropZone } from "@/components/shared"
 import { useFilePicker, useQpdf } from "@/hooks"
-import { useState } from "react"
+import { useFileStore } from "@/stores"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
 import { Unlock, X, FolderOpen } from "lucide-react"
+import { useI18n } from "@/i18n"
 
 export default function DecryptPage() {
   const { loading, runWithToast, startLoading } = useQpdf()
@@ -11,13 +13,20 @@ export default function DecryptPage() {
   const [files, setFiles] = useState<string[]>([])
   const [password, setPassword] = useState("")
   const [outputDir, setOutputDir] = useState<string | null>(null)
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
+
+  useEffect(() => {
+    if (pendingFile) { setFiles((p) => [...p, pendingFile]); setPendingFile(null) }
+  }, [])
 
   const handleDrop = (paths: string[]) =>
     setFiles((prev) => [...prev, ...paths])
 
   const handleDecrypt = async () => {
-    if (files.length === 0) return toast.error("Select PDF files")
-    if (!password) return toast.error("Enter a password")
+    if (files.length === 0) return toast.error(t.decrypt.errorNoFiles)
+    if (!password) return toast.error(t.decrypt.errorNoPassword)
 
     let dir = outputDir
     if (!dir) {
@@ -39,11 +48,11 @@ export default function DecryptPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message="Decrypting PDFs..." />
+      <ProgressOverlay loading={loading} message={t.decrypt.loading} />
       <div>
-        <h1 className="text-2xl font-bold">Decrypt PDF</h1>
+        <h1 className="text-2xl font-bold">{t.decrypt.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Remove password protection from PDF files
+          {t.decrypt.subtitle}
         </p>
       </div>
       <DropZone onFilesSelected={handleDrop} multiple />
@@ -65,11 +74,11 @@ export default function DecryptPage() {
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        {files.length} file{files.length !== 1 ? "s" : ""} selected
+        {files.length} {files.length !== 1 ? t.shared.filesSelected : t.shared.fileSelected}
       </p>
       <input
         type="password"
-        placeholder="Enter password"
+        placeholder={t.decrypt.enterPassword}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -82,7 +91,7 @@ export default function DecryptPage() {
         className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
       >
         <FolderOpen className="h-4 w-4" />
-        {outputDir ? outputDir.split("/").pop() : "Choose output folder"}
+        {outputDir ? outputDir.split("/").pop() : t.shared.chooseOutputFolder}
       </button>
       {outputDir && (
         <p className="truncate text-xs text-muted-foreground">{outputDir}</p>
@@ -93,7 +102,7 @@ export default function DecryptPage() {
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         <Unlock className="h-4 w-4" />
-        {loading ? "Decrypting..." : "Decrypt Files"}
+        {loading ? t.decrypt.btnLoading : t.decrypt.btnIdle}
       </button>
     </div>
   )

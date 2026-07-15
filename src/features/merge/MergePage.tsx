@@ -1,21 +1,30 @@
 import { DropZone } from "@/components/shared"
 import { useFilePicker, useQpdf } from "@/hooks"
-import { useState } from "react"
+import { useFileStore } from "@/stores"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
 import { Save, X } from "lucide-react"
+import { useI18n } from "@/i18n"
 
 export default function MergePage() {
   const { loading, runWithToast, startLoading } = useQpdf()
   const { saveFile } = useFilePicker()
   const [files, setFiles] = useState<string[]>([])
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
+
+  useEffect(() => {
+    if (pendingFile) { setFiles((p) => [...p, pendingFile]); setPendingFile(null) }
+  }, [])
 
   const handleDrop = (paths: string[]) =>
     setFiles((prev) => [...prev, ...paths])
 
   const handleMerge = async () => {
     if (files.length < 2) {
-      toast.error("Select at least 2 PDF files")
+      toast.error(t.merge.errorMin)
       return
     }
     startLoading()
@@ -30,11 +39,11 @@ export default function MergePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message="Merging files..." />
+      <ProgressOverlay loading={loading} message={t.merge.loading} />
       <div>
-        <h1 className="text-2xl font-bold">Merge PDFs</h1>
+        <h1 className="text-2xl font-bold">{t.merge.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Combine multiple PDF files into one
+          {t.merge.subtitle}
         </p>
       </div>
       <DropZone onFilesSelected={handleDrop} multiple />
@@ -56,7 +65,7 @@ export default function MergePage() {
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        {files.length} file{files.length !== 1 ? "s" : ""} selected
+        {files.length} {files.length !== 1 ? t.shared.filesSelected : t.shared.fileSelected}
       </p>
       <button
         onClick={handleMerge}
@@ -64,7 +73,7 @@ export default function MergePage() {
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
-        {loading ? "Merging..." : "Save Merged File"}
+        {loading ? t.merge.btnLoading : t.merge.btnIdle}
       </button>
     </div>
   )

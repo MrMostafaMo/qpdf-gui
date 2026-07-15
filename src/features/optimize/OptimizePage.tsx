@@ -1,20 +1,29 @@
 import { DropZone } from "@/components/shared"
 import { useFilePicker, useQpdf } from "@/hooks"
-import { useState } from "react"
+import { useFileStore } from "@/stores"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
 import { Minimize2 } from "lucide-react"
+import { useI18n } from "@/i18n"
 
 export default function OptimizePage() {
   const { loading, runWithToast, startLoading } = useQpdf()
   const { saveFile } = useFilePicker()
   const [file, setFile] = useState<string | null>(null)
   const [level, setLevel] = useState("generalized")
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
+
+  useEffect(() => {
+    if (pendingFile) { setFile(pendingFile); setPendingFile(null) }
+  }, [])
 
   const handleDrop = (paths: string[]) => setFile(paths[0])
 
   const handleOptimize = async () => {
-    if (!file) return toast.error("Select a PDF file")
+    if (!file) return toast.error(t.optimize.errorFile)
     startLoading()
     const baseName = file.replace(/\.pdf$/i, "")
     const outputPath = await saveFile(`${baseName}_optimized.pdf`)
@@ -29,11 +38,11 @@ export default function OptimizePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message="Optimizing PDF..." />
+      <ProgressOverlay loading={loading} message={t.optimize.loading} />
       <div>
-        <h1 className="text-2xl font-bold">Optimize PDF</h1>
+        <h1 className="text-2xl font-bold">{t.optimize.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Reduce PDF file size with quality presets
+          {t.optimize.subtitle}
         </p>
       </div>
       <DropZone onFilesSelected={handleDrop} />
@@ -42,10 +51,10 @@ export default function OptimizePage() {
       )}
       <div className="space-y-2">
         {[
-          { value: "generalized", label: "Generalized", desc: "Balanced compression (default)" },
-          { value: "all", label: "All", desc: "Maximum compression" },
-          { value: "specialized", label: "Specialized", desc: "Minimal changes" },
-          { value: "none", label: "None", desc: "No recompression" },
+          { value: "generalized", label: t.optimize.generalized, desc: t.optimize.generalizedDesc },
+          { value: "all", label: t.optimize.all, desc: t.optimize.allDesc },
+          { value: "specialized", label: t.optimize.specialized, desc: t.optimize.specializedDesc },
+          { value: "none", label: t.optimize.none, desc: t.optimize.noneDesc },
         ].map((opt) => (
           <label
             key={opt.value}
@@ -76,7 +85,7 @@ export default function OptimizePage() {
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         <Minimize2 className="h-4 w-4" />
-        {loading ? "Optimizing..." : "Save Optimized File"}
+        {loading ? t.optimize.btnLoading : t.optimize.btnIdle}
       </button>
     </div>
   )

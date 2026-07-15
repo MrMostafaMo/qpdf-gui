@@ -1,10 +1,12 @@
 import { DropZone } from "@/components/shared"
 import { useFilePicker, useQpdf } from "@/hooks"
-import { useState } from "react"
+import { useFileStore } from "@/stores"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
 import { Save, FolderOpen } from "lucide-react"
 import { isValidPageRange } from "@/utils/validators"
+import { useI18n } from "@/i18n"
 
 export default function SplitPage() {
   const { loading, runWithToast, startLoading } = useQpdf()
@@ -14,12 +16,19 @@ export default function SplitPage() {
   const [pages, setPages] = useState("")
   const [interval, setInterval] = useState(1)
   const [outputDir, setOutputDir] = useState<string | null>(null)
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
+
+  useEffect(() => {
+    if (pendingFile) { setFile(pendingFile); setPendingFile(null) }
+  }, [])
 
   const handleDrop = (paths: string[]) => setFile(paths[0])
   const pagesValid = mode === "every" || !pages || isValidPageRange(pages)
 
   const handleSplit = async () => {
-    if (!file) return toast.error("Select a PDF file")
+    if (!file) return toast.error(t.split.errorFile)
 
     if (!outputDir) {
       const dir = await pickDirectory()
@@ -31,9 +40,9 @@ export default function SplitPage() {
     if (!dir) return
 
     if (mode === "ranges") {
-      if (!pages) return toast.error("Enter page range")
+      if (!pages) return toast.error(t.split.rangeError)
       if (!isValidPageRange(pages)) {
-        toast.error("Invalid page range format (e.g. 1-5,8,10-12)")
+        toast.error(t.split.errorInvalid)
         return
       }
       startLoading()
@@ -44,7 +53,7 @@ export default function SplitPage() {
         ranges: pages,
       })
     } else {
-      if (interval < 1) return toast.error("Interval must be at least 1")
+      if (interval < 1) return toast.error(t.split.intervalError)
       startLoading()
       await runWithToast("split_pdf", {
         filePath: file,
@@ -57,11 +66,11 @@ export default function SplitPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message="Splitting file..." />
+      <ProgressOverlay loading={loading} message={t.split.loading} />
       <div>
-        <h1 className="text-2xl font-bold">Split PDF</h1>
+        <h1 className="text-2xl font-bold">{t.split.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Split a PDF into separate files
+          {t.split.subtitle}
         </p>
       </div>
       <DropZone onFilesSelected={handleDrop} />
@@ -80,7 +89,7 @@ export default function SplitPage() {
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
           >
-            {m === "ranges" ? "By Page Ranges" : "Every N Pages"}
+            {m === "ranges" ? t.split.byRanges : t.split.everyN}
           </button>
         ))}
       </div>
@@ -88,7 +97,7 @@ export default function SplitPage() {
       {mode === "ranges" ? (
         <input
           type="text"
-          placeholder="Pages (e.g. 1-5,8,10-12)"
+          placeholder={t.extract.placeholder}
           value={pages}
           onChange={(e) => setPages(e.target.value)}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -96,7 +105,7 @@ export default function SplitPage() {
       ) : (
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">
-            Every
+            {t.split.every}
           </span>
           <input
             type="number"
@@ -106,7 +115,7 @@ export default function SplitPage() {
             className="w-20 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
           />
           <span className="text-sm text-muted-foreground">
-            page{interval !== 1 ? "s" : ""}
+            {t.shared.page}{interval !== 1 ? "s" : ""}
           </span>
         </div>
       )}
@@ -117,7 +126,7 @@ export default function SplitPage() {
         className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
       >
         <FolderOpen className="h-4 w-4" />
-        {outputDir ? outputDir.split("/").pop() : "Choose output folder"}
+        {outputDir ? outputDir.split("/").pop() : t.shared.chooseOutputFolder}
       </button>
       {outputDir && (
         <p className="truncate text-xs text-muted-foreground">{outputDir}</p>
@@ -129,7 +138,7 @@ export default function SplitPage() {
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
-        {loading ? "Splitting..." : "Split PDF"}
+        {loading ? t.split.btnLoading : t.split.btnIdle}
       </button>
     </div>
   )

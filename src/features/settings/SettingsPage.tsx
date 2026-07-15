@@ -1,4 +1,10 @@
 import { useSettingsStore, useTheme } from "@/hooks"
+import { useI18n, type Locale } from "@/i18n"
+
+const LANGUAGES: { value: Locale; label: string }[] = [
+  { value: "en", label: "English" },
+  { value: "ar", label: "العربية" },
+]
 
 export default function SettingsPage() {
   const {
@@ -6,38 +12,40 @@ export default function SettingsPage() {
     overwrite_existing,
     remember_recent_files,
     max_recent_files,
+    language,
     updateSettings,
   } = useSettingsStore()
   const { theme: activeTheme, setTheme } = useTheme()
+  const t = useI18n()
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold">{t.settings.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Configure application preferences
+          {t.settings.subtitle}
         </p>
       </div>
 
       <div className="space-y-4 rounded-lg border border-border bg-card p-4">
-        <h2 className="text-sm font-medium">Appearance</h2>
+        <h2 className="text-sm font-medium">{t.settings.appearance}</h2>
         <div className="flex items-center gap-3 text-sm">
-          <span>Theme</span>
+          <span>{t.settings.theme}</span>
           <div className="flex gap-2">
-            {(["light", "dark", "system"] as const).map((t) => (
+            {(["light", "dark", "system"] as const).map((th) => (
               <button
-                key={t}
+                key={th}
                 onClick={() => {
-                  setTheme(t)
-                  updateSettings({ theme: t })
+                  setTheme(th)
+                  updateSettings({ theme: th })
                 }}
                 className={`rounded-md px-3 py-1.5 text-sm capitalize ${
-                  activeTheme === t
+                  activeTheme === th
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
-                {t}
+                {t.theme[th]}
               </button>
             ))}
           </div>
@@ -45,7 +53,26 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-4 rounded-lg border border-border bg-card p-4">
-        <h2 className="text-sm font-medium">General</h2>
+        <h2 className="text-sm font-medium">{t.settings.language}</h2>
+        <div className="flex gap-2">
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.value}
+              onClick={() => updateSettings({ language: lang.value })}
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                language === lang.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+            >
+              {lang.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+        <h2 className="text-sm font-medium">{t.settings.general}</h2>
 
         <label className="flex items-center gap-3 text-sm">
           <input
@@ -56,7 +83,7 @@ export default function SettingsPage() {
             }
             className="h-4 w-4 rounded border-input"
           />
-          Overwrite existing files
+          {t.settings.overwrite}
         </label>
 
         <label className="flex items-center gap-3 text-sm">
@@ -68,12 +95,12 @@ export default function SettingsPage() {
             }
             className="h-4 w-4 rounded border-input"
           />
-          Remember recent files
+          {t.settings.rememberRecent}
         </label>
 
         {remember_recent_files && (
           <div className="flex items-center gap-3 text-sm">
-            <span>Max recent files:</span>
+            <span>{t.settings.maxRecent}</span>
             <input
               type="number"
               value={max_recent_files}
@@ -89,24 +116,24 @@ export default function SettingsPage() {
       </div>
 
       <div className="space-y-4 rounded-lg border border-border bg-card p-4">
-        <h2 className="text-sm font-medium">Default Output Directory</h2>
+        <h2 className="text-sm font-medium">{t.settings.defaultOutput}</h2>
         <input
           type="text"
           value={default_output_dir}
           onChange={(e) =>
             updateSettings({ default_output_dir: e.target.value })
           }
-          placeholder="Same as input file"
+          placeholder={t.settings.defaultOutputPlaceholder}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
         <p className="text-xs text-muted-foreground">
-          Leave empty to save in the same directory as the input file
+          {t.settings.defaultOutputHint}
         </p>
       </div>
 
       <div className="space-y-2 rounded-lg border border-border bg-card p-4 text-center">
-        <p className="text-sm font-medium">Mostafa Mohamed</p>
-        <p className="text-xs text-muted-foreground">Made with love in Egypt 🇪🇬</p>
+        <p className="text-sm font-medium">{t.settings.developer.name}</p>
+        <p className="text-xs text-muted-foreground">{t.settings.developer.credit}</p>
       </div>
     </div>
   )

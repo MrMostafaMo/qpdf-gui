@@ -1,9 +1,11 @@
 import { DropZone } from "@/components/shared"
 import { useFilePicker, useQpdf } from "@/hooks"
-import { useState } from "react"
+import { useFileStore } from "@/stores"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
 import { Save, FolderOpen } from "lucide-react"
+import { useI18n } from "@/i18n"
 
 export default function BatchPage() {
   const { loading, runWithToast, startLoading } = useQpdf()
@@ -11,11 +13,18 @@ export default function BatchPage() {
   const [inputDir, setInputDir] = useState<string | null>(null)
   const [outputDir, setOutputDir] = useState<string | null>(null)
   const [operation, setOperation] = useState("optimize")
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
+
+  useEffect(() => {
+    if (pendingFile) { setInputDir(pendingFile); setPendingFile(null) }
+  }, [])
 
   const handleDrop = (paths: string[]) => setInputDir(paths[0])
 
   const handleBatch = async () => {
-    if (!inputDir) return toast.error("Select input directory")
+    if (!inputDir) return toast.error(t.batch.errorNoInput)
     if (!outputDir) {
       const dir = await pickDirectory()
       if (!dir) return
@@ -34,23 +43,23 @@ export default function BatchPage() {
   }
 
   const ops = [
-    { value: "optimize", label: "Optimize" },
-    { value: "linearize", label: "Linearize" },
+    { value: "optimize", label: t.batch.optimize },
+    { value: "linearize", label: t.batch.linearize },
   ]
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <ProgressOverlay loading={loading} message="Running batch operation..." />
+      <ProgressOverlay loading={loading} message={t.batch.loading} />
       <div>
-        <h1 className="text-2xl font-bold">Batch Operations</h1>
+        <h1 className="text-2xl font-bold">{t.batch.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Apply an operation to all PDFs in a folder
+          {t.batch.subtitle}
         </p>
       </div>
 
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-sm font-medium">Input Directory</p>
+          <p className="mb-2 text-sm font-medium">{t.batch.inputDir}</p>
           <DropZone onFilesSelected={handleDrop} />
           {inputDir && (
             <p className="mt-2 truncate text-sm text-muted-foreground">
@@ -60,7 +69,7 @@ export default function BatchPage() {
         </div>
 
         <div>
-          <p className="mb-2 text-sm font-medium">Output Directory</p>
+          <p className="mb-2 text-sm font-medium">{t.batch.outputDir}</p>
           <button
             onClick={async () => {
               const dir = await pickDirectory()
@@ -69,7 +78,7 @@ export default function BatchPage() {
             className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
           >
             <FolderOpen className="h-4 w-4" />
-            {outputDir ? outputDir.split("/").pop() : "Choose output folder"}
+            {outputDir ? outputDir.split("/").pop() : t.shared.chooseOutputFolder}
           </button>
           {outputDir && (
             <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -80,7 +89,7 @@ export default function BatchPage() {
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium">Operation</p>
+        <p className="text-sm font-medium">{t.batch.operation}</p>
         <div className="flex gap-2">
           {ops.map((op) => (
             <button
@@ -104,7 +113,7 @@ export default function BatchPage() {
         className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
-        {loading ? "Running..." : "Run Batch Operation"}
+        {loading ? t.batch.btnLoading : t.batch.btnIdle}
       </button>
     </div>
   )

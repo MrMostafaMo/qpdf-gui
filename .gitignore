@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Tauri updater signing key (NEVER commit)
+src-tauri/updater.key
+src-tauri/updater.key.pub
+
 # Environment
 .env
 .env.*

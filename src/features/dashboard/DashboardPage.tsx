@@ -13,30 +13,39 @@ import {
   Zap,
   Info,
   Layers,
+  X,
 } from "lucide-react"
 import { OperationLogs } from "@/components/shared/OperationLogs"
+import { useI18n } from "@/i18n"
 
-const TOOLS = [
-  { to: "/extract", icon: FileOutput, label: "Extract Pages", desc: "Pull pages from a PDF" },
-  { to: "/merge", icon: Merge, label: "Merge PDFs", desc: "Combine multiple PDFs" },
-  { to: "/split", icon: Scissors, label: "Split PDF", desc: "Split into parts" },
-  { to: "/rotate", icon: RotateCw, label: "Rotate Pages", desc: "Rotate page orientation" },
-  { to: "/delete", icon: Trash2, label: "Delete Pages", desc: "Remove pages" },
-  { to: "/encrypt", icon: Lock, label: "Encrypt", desc: "Add password protection" },
-  { to: "/decrypt", icon: Unlock, label: "Decrypt", desc: "Remove password" },
-  { to: "/optimize", icon: Maximize2, label: "Optimize", desc: "Reduce file size" },
-  { to: "/linearize", icon: Zap, label: "Linearize", desc: "Fast web viewing" },
-  { to: "/info", icon: Info, label: "PDF Info", desc: "View file properties" },
-  { to: "/batch", icon: Layers, label: "Batch Ops", desc: "Process multiple files" },
+const TOOL_KEYS = [
+  { to: "/info", icon: Info, key: "info" as const },
+  { to: "/extract", icon: FileOutput, key: "extract" as const },
+  { to: "/merge", icon: Merge, key: "merge" as const },
+  { to: "/split", icon: Scissors, key: "split" as const },
+  { to: "/rotate", icon: RotateCw, key: "rotate" as const },
+  { to: "/delete", icon: Trash2, key: "delete" as const },
+  { to: "/encrypt", icon: Lock, key: "encrypt" as const },
+  { to: "/decrypt", icon: Unlock, key: "decrypt" as const },
+  { to: "/optimize", icon: Maximize2, key: "optimize" as const },
+  { to: "/linearize", icon: Zap, key: "linearize" as const },
+  { to: "/batch", icon: Layers, key: "batch" as const },
 ]
 
 export default function DashboardPage() {
   const navigate = useNavigate()
   const recentFiles = useFileStore((s) => s.recentFiles)
   const clearRecentFiles = useFileStore((s) => s.clearRecentFiles)
+  const pendingFile = useFileStore((s) => s.pendingFile)
+  const setPendingFile = useFileStore((s) => s.setPendingFile)
+  const t = useI18n()
 
-  const handleDrop = () => {
-    navigate("/info")
+  const handleDrop = (paths: string[]) => {
+    setPendingFile(paths[0])
+  }
+
+  const handleToolSelect = (to: string) => {
+    navigate(to)
   }
 
   const formatSize = (bytes: number) => {
@@ -48,16 +57,45 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t.dashboard.title}</h1>
         <p className="text-sm text-muted-foreground">
-          Select a tool or drop a PDF to get started
+          {t.dashboard.subtitle}
         </p>
       </div>
 
       <DropZone onFilesSelected={handleDrop} />
 
+      {pendingFile && (
+        <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">
+              {t.dashboard.chooseToolFor}
+            </p>
+            <button
+              onClick={() => setPendingFile(null)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="truncate text-xs text-muted-foreground">{pendingFile}</p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {TOOL_KEYS.map(({ to, icon: Icon, key }) => (
+              <button
+                key={to}
+                onClick={() => handleToolSelect(to)}
+                className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent"
+              >
+                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span>{t.dashboard.tools[key].label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {TOOLS.map(({ to, icon: Icon, label, desc }) => (
+        {TOOL_KEYS.map(({ to, icon: Icon, key }) => (
           <button
             key={to}
             onClick={() => navigate(to)}
@@ -65,8 +103,8 @@ export default function DashboardPage() {
           >
             <Icon className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary" />
             <div>
-              <p className="text-sm font-medium">{label}</p>
-              <p className="text-xs text-muted-foreground">{desc}</p>
+              <p className="text-sm font-medium">{t.dashboard.tools[key].label}</p>
+              <p className="text-xs text-muted-foreground">{t.dashboard.tools[key].desc}</p>
             </div>
           </button>
         ))}
@@ -75,12 +113,12 @@ export default function DashboardPage() {
       {recentFiles.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted-foreground">Recent Files</h2>
+            <h2 className="text-sm font-medium text-muted-foreground">{t.dashboard.recentFiles}</h2>
             <button
               onClick={clearRecentFiles}
               className="text-xs text-muted-foreground hover:text-destructive"
             >
-              Clear all
+              {t.dashboard.clearAll}
             </button>
           </div>
           <div className="space-y-1">
@@ -92,7 +130,7 @@ export default function DashboardPage() {
                 <span className="truncate">{f.file_name}</span>
                 <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
                   <span>{formatSize(f.file_size)}</span>
-                  <span>{f.page_count} pages</span>
+                  <span>{f.page_count} {t.shared.pages}</span>
                 </div>
               </div>
             ))}

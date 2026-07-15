@@ -2,6 +2,7 @@ import { useCallback, useState } from "react"
 import { Upload, FolderOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFilePicker } from "@/hooks"
+import { useI18n } from "@/i18n"
 
 interface DropZoneProps {
   onFilesSelected: (paths: string[]) => void
@@ -16,6 +17,7 @@ export function DropZone({
 }: DropZoneProps) {
   const [dragOver, setDragOver] = useState(false)
   const { pickFiles } = useFilePicker()
+  const t = useI18n()
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -52,7 +54,7 @@ export function DropZone({
     >
       <Upload className="mb-4 h-10 w-10 text-muted-foreground" />
       <p className="mb-3 text-sm text-muted-foreground">
-        Drop PDF file{multiple ? "s" : ""} here
+        {multiple ? t.shared.dropMultiple : t.shared.dropSingle}
       </p>
       <button
         onClick={handleBrowse}
@@ -60,7 +62,7 @@ export function DropZone({
         className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
         <FolderOpen className="h-3.5 w-3.5" />
-        Browse files
+        {t.shared.browse}
       </button>
     </div>
   )

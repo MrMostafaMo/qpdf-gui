@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n"
+
 export type Theme = "light" | "dark" | "system"
 
 export interface Settings {
@@ -6,6 +8,7 @@ export interface Settings {
   theme: Theme
   remember_recent_files: boolean
   max_recent_files: number
+  language: Locale
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -14,4 +17,5 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "system",
   remember_recent_files: true,
   max_recent_files: 20,
+  language: "en",
 }

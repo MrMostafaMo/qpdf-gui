@@ -52,7 +52,7 @@ export function AppLayout() {
       <Sidebar />
       <div
         className={`flex flex-1 flex-col transition-all duration-300 ${
-          sidebarCollapsed ? "ml-16" : "ml-60"
+          sidebarCollapsed ? "ms-16" : "ms-60"
         }`}
       >
         <Header />
