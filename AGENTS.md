@@ -15,6 +15,9 @@ pnpm tauri dev
 
 # Build
 pnpm tauri build
+
+# Build AppImage (requires env vars — see AppImage Build section)
+APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true pnpm tauri build --bundles appimage
 ```
 
 ## Tech Stack
@@ -62,8 +65,6 @@ qpdf-gui/
 │   │   └── utils/error.rs        # AppError enum
 │   ├── capabilities/default.json # Plugin permissions
 │   └── tauri.conf.json           # Window: 1200x800, min 900x600, bundled resources
-├── flatpak/                      # Flatpak manifest + metadata
-├── snap/                         # Snap packaging
 ├── aur/                          # Arch User Repository (PKGBUILD)
 ├── logo.png                      # Source image for app icon
 └── package.json
@@ -183,12 +184,22 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 
 ## CI/CD
 
-- GitHub Actions: `.github/workflows/build.yml`
+### GitHub Actions
+- Workflow: `.github/workflows/build.yml`
 - Matrix: Linux x86_64 (ubuntu-24.04, .deb + .rpm + .AppImage), Linux ARM64 (ubuntu-24.04-arm, .deb + .rpm + .AppImage), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
-- Also available via: Flatpak (`flatpak/`), Snap (`snap/`), AUR (`aur/`)
-- qpdf is bundled: CI downloads prebuilt binaries (Linux/Windows) or compiles from source (macOS) into `src-tauri/resources/`
+- `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` — suppresses Node.js 20 deprecation
+- `APPIMAGE_EXTRACT_AND_RUN: "1"` — required for AppImage builds
+- `NO_STRIP: "true"` — required for AppImage builds (fixes `linuxdeploy` `.relr.dyn` bug)
+- qpdf is bundled: CI downloads prebuilt binaries (Linux/Windows) or compiles from source (macOS)
 - Auto-update: signing key in `src-tauri/updater.key` (gitignored), GitHub releases with `latest.json`
-- `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true` suppresses Node.js 20 deprecation warning
+- **Note:** GitHub Actions may be disabled due to billing — build locally if CI fails
+
+### GitLab CI
+- Pipeline: `.gitlab-ci.yml`
+- Linux x86_64: runs on GitLab shared runners
+- Linux ARM64, Windows, macOS: require self-hosted runners (optional, `allow_failure: true`)
+- Same env vars: `APPIMAGE_EXTRACT_AND_RUN=1`, `NO_STRIP=true`
+- Also available via: AUR (`aur/`)
 
 ## Input Validation
 
@@ -251,3 +262,30 @@ git tag v<VERSION> && git push origin v<VERSION>
 - qpdf is bundled with the app (no separate install needed)
 - macOS build is Apple Silicon (arm64), not universal binary
 - Windows build is x86_64 only
+- AppImage requires `APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true` due to known upstream `linuxdeploy` bug with `.relr.dyn` ELF sections
+
+## AppImage Build
+
+`linuxdeploy` crashes when `strip` encounters `.relr.dyn` sections in modern ELF binaries. Two env vars fix this:
+
+```bash
+APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true pnpm tauri build --bundles appimage
+```
+
+These vars are set in both CI files. Without them, AppImage build fails.
+
+## Releases
+
+- **GitHub:** https://github.com/MrMostafaMo/qpdf-gui/releases
+- **GitLab:** https://gitlab.com/mrmostafa/qpdf-gui/-/releases
+- **Current:** v1.3.0
+
+## GitLab
+
+- **URL:** https://gitlab.com/mrmostafa/qpdf-gui
+- **Remote:** `gitlab` (`git remote add gitlab https://gitlab.com/mrmostafa/qpdf-gui.git`)
+
+### GitLab Push Rule
+
+**DO NOT** push to GitLab without explicit user permission. Always ask before `git push gitlab`.
+After every edit to any file, show the user and ask if they want to push to GitLab.
