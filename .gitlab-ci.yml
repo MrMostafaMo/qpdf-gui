@@ -1,6 +1,10 @@
 stages:
   - build
 
+variables:
+  APPIMAGE_EXTRACT_AND_RUN: "1"
+  NO_STRIP: "true"
+
 cache:
   key: "${CI_COMMIT_REF_SLUG}"
   paths:
