@@ -186,7 +186,6 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 ### GitHub Actions
 - Workflow: `.github/workflows/build.yml`
 - Matrix: Linux x86_64 (ubuntu-24.04, .deb + .rpm + .AppImage), Linux ARM64 (ubuntu-24.04-arm, .deb + .rpm + .AppImage), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
-- `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` — suppresses Node.js 20 deprecation
 - `APPIMAGE_EXTRACT_AND_RUN: "1"` — required for AppImage builds
 - `NO_STRIP: "true"` — required for AppImage builds (fixes `linuxdeploy` `.relr.dyn` bug)
 - qpdf is bundled: CI downloads prebuilt binaries (Linux/Windows) or compiles from source (macOS)
