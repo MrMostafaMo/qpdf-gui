@@ -65,7 +65,6 @@ qpdf-gui/
 │   │   └── utils/error.rs        # AppError enum
 │   ├── capabilities/default.json # Plugin permissions
 │   └── tauri.conf.json           # Window: 1200x800, min 900x600, bundled resources
-├── aur/                          # Arch User Repository (PKGBUILD)
 ├── logo.png                      # Source image for app icon
 └── package.json
 ```
@@ -123,7 +122,7 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 | `appStore` | None (memory) | `sidebarCollapsed`, `theme` |
 | `fileStore` | None (memory) | `recentFiles[]`, `pendingFile` |
 | `settingsStore` | `tauri-plugin-store` (`settings.json`) | `default_output_dir`, `overwrite_existing`, `theme`, `remember_recent_files`, `max_recent_files`, `language` |
-| `logStore` | `zustand/persist` (localStorage) | `entries[]` (max 100) |
+| `useLogStore` | `zustand/persist` (localStorage) | `entries[]` (max 100) |
 | `loadingStore` | None (memory) | `loading` — global loading state for ProgressBar |
 
 ## Hooks
@@ -199,7 +198,6 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 - Linux x86_64: runs on GitLab shared runners
 - Linux ARM64, Windows, macOS: require self-hosted runners (optional, `allow_failure: true`)
 - Same env vars: `APPIMAGE_EXTRACT_AND_RUN=1`, `NO_STRIP=true`
-- Also available via: AUR (`aur/`)
 
 ## Input Validation
 

@@ -24,11 +24,11 @@ export function AppLayout() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      const isMod = e.ctrlKey || e.metaKey
       const key = [
-        e.ctrlKey && "ctrl",
+        isMod && "ctrl",
         e.shiftKey && "shift",
         e.altKey && "alt",
-        e.metaKey && "meta",
         e.key.toLowerCase(),
       ]
         .filter(Boolean)

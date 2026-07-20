@@ -56,10 +56,13 @@ const en = {
     page: "page",
     filesSelected: "files selected",
     fileSelected: "file selected",
+    chooseInputFolder: "Choose input folder",
     chooseOutputFolder: "Choose output folder",
     result: "Result",
     before: "Before",
     after: "After",
+    notifyComplete: "Operation Complete",
+    notifyFailed: "Operation Failed",
   },
 
   // Dashboard
@@ -115,6 +118,7 @@ const en = {
     every: "Every",
     intervalError: "Interval must be at least 1",
     rangeError: "Enter page range",
+    placeholder: "Ranges (e.g. 1-5,8,10-12)",
     btnIdle: "Split PDF",
     btnLoading: "Splitting...",
     loading: "Splitting file...",

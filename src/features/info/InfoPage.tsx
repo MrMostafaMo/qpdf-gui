@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n"
 import { open } from "@tauri-apps/plugin-shell"
 import { Button } from "@/components/ui/button"
 import type { PdfInfo } from "@/types"
+import { formatFileSize } from "@/utils/format"
 
 export default function InfoPage() {
   const { loading, run } = useQpdf()
@@ -23,6 +24,7 @@ export default function InfoPage() {
 
   useEffect(() => {
     if (pendingFile) { handleDrop([pendingFile]); setPendingFile(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleDrop = async (paths: string[]) => {
@@ -57,7 +59,7 @@ export default function InfoPage() {
           <InfoRow label={t.info.pages} value={String(info.page_count)} />
           {info.file_name && <InfoRow label={t.info.file} value={info.file_name} />}
           {info.file_size != null && (
-            <InfoRow label={t.info.size} value={`${(info.file_size / 1024).toFixed(1)} KB`} />
+            <InfoRow label={t.info.size} value={formatFileSize(info.file_size)} />
           )}
           {info.title && <InfoRow label={t.info.title_} value={info.title} />}
           {info.author && <InfoRow label={t.info.author} value={info.author} />}

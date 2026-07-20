@@ -5,7 +5,7 @@ interface ProgressOverlayProps {
 
 export function ProgressOverlay({
   loading,
-  message = "Processing...",
+  message,
 }: ProgressOverlayProps) {
   if (!loading) return null
 

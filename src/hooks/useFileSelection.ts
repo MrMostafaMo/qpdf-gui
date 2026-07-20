@@ -11,15 +11,19 @@ export function useFileSelection(multiple = false) {
 
   useEffect(() => {
     if (pendingFile) {
-      if (multiple) setFiles((p) => [...p, pendingFile])
+      if (multiple) setFiles((p) => p.includes(pendingFile) ? p : [...p, pendingFile])
       else setFile(pendingFile)
       setPendingFile(null)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleDrop = useCallback(
     (paths: string[]) => {
-      if (multiple) setFiles((prev) => [...prev, ...paths])
+      if (multiple) setFiles((prev) => {
+        const newPaths = paths.filter((p) => !prev.includes(p))
+        return [...prev, ...newPaths]
+      })
       else setFile(paths[0])
     },
     [multiple],

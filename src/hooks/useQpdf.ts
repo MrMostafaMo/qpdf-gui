@@ -6,12 +6,14 @@ import type { OperationResult } from "@/types"
 import { toast } from "sonner"
 import { useLogStore } from "@/components/shared/OperationLogs"
 import { useLoadingStore } from "@/stores"
+import { useI18n } from "@/i18n"
 
 export function useQpdf() {
   const [loading, setLoading] = useState(false)
   const setGlobalLoading = useLoadingStore((s) => s.setLoading)
   const addLog = useLogStore((s) => s.addEntry)
   const updateLog = useLogStore((s) => s.updateEntry)
+  const t = useI18n()
 
   const setAllLoading = useCallback(
     (v: boolean) => {
@@ -43,9 +45,9 @@ export function useQpdf() {
       command: string,
       args?: Record<string, unknown>,
     ): Promise<OperationResult> => {
-      const inputFile = (args?.filePath as string) || ""
+      const inputFile = (args?.filePath as string) || (Array.isArray(args?.filePaths) ? (args?.filePaths as string[])[0] : "") || ""
       const outputPath = (args?.outputPath as string) || ""
-      const operationName = command.replace(/_/g, " ")
+      const operationName = command
 
       const logId = addLog({
         operation: operationName,
@@ -68,7 +70,7 @@ export function useQpdf() {
         const focused = await getCurrentWindow().isFocused()
         if (!focused) {
           sendNotification({
-            title: result.success ? "Operation Complete" : "Operation Failed",
+            title: result.success ? t.shared.notifyComplete : t.shared.notifyFailed,
             body: result.message,
           })
         }
@@ -79,14 +81,14 @@ export function useQpdf() {
         updateLog(logId, { status: "error", message })
         const focused = await getCurrentWindow().isFocused()
         if (!focused) {
-          sendNotification({ title: "Operation Failed", body: message })
+          sendNotification({ title: t.shared.notifyFailed, body: message })
         }
         throw error
       } finally {
         setAllLoading(false)
       }
     },
-    [addLog, updateLog, setAllLoading],
+    [addLog, updateLog, setAllLoading, t],
   )
 
   return { loading, run, runWithToast, startLoading: () => setAllLoading(true) } as const

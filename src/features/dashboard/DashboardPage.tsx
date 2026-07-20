@@ -1,6 +1,7 @@
 import { DropZone } from "@/components/shared"
 import { useFileStore } from "@/stores"
 import { useNavigate } from "react-router-dom"
+import { useCallback } from "react"
 import {
   FileOutput,
   Merge,
@@ -42,9 +43,9 @@ export default function DashboardPage() {
   const setPendingFile = useFileStore((s) => s.setPendingFile)
   const t = useI18n()
 
-  const handleDrop = (paths: string[]) => {
+  const handleDrop = useCallback((paths: string[]) => {
     setPendingFile(paths[0])
-  }
+  }, [setPendingFile])
 
   const handleToolSelect = (to: string) => {
     navigate(to)

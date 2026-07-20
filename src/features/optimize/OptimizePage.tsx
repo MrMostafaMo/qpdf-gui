@@ -18,20 +18,24 @@ export default function OptimizePage() {
   const handleOptimize = async () => {
     if (!file) return toast.error(t.optimize.errorFile)
     setResult(null)
-    startLoading()
     const baseName = file.replace(/\.pdf$/i, "")
     const outputPath = await saveFile(`${baseName}_optimized.pdf`)
     if (!outputPath) return
+    startLoading()
 
-    const beforeSize = (await stat(file)).size
-    const op = await runWithToast("optimize_pdf", {
-      filePath: file,
-      outputPath,
-      level,
-    })
-    if (op.success) {
-      const afterSize = (await stat(outputPath)).size
-      setResult({ before: beforeSize, after: afterSize })
+    try {
+      const beforeSize = (await stat(file)).size
+      const op = await runWithToast("optimize_pdf", {
+        filePath: file,
+        outputPath,
+        level,
+      })
+      if (op.success) {
+        const afterSize = (await stat(outputPath)).size
+        setResult({ before: beforeSize, after: afterSize })
+      }
+    } catch {
+      // stat or invoke failure — runWithToast already shows error
     }
   }
 

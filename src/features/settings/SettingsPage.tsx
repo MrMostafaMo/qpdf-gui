@@ -1,6 +1,7 @@
 import { useTheme } from "@/hooks"
 import { useSettingsStore } from "@/stores/settingsStore"
 import { useI18n, type Locale } from "@/i18n"
+import { useCallback, useRef } from "react"
 
 const LANGUAGES: { value: Locale; label: string }[] = [
   { value: "en", label: "English" },
@@ -10,7 +11,6 @@ const LANGUAGES: { value: Locale; label: string }[] = [
 export default function SettingsPage() {
   const {
     default_output_dir,
-    overwrite_existing,
     remember_recent_files,
     max_recent_files,
     language,
@@ -18,6 +18,11 @@ export default function SettingsPage() {
   } = useSettingsStore()
   const { theme: activeTheme, setTheme } = useTheme()
   const t = useI18n()
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debouncedUpdate = useCallback((patch: Parameters<typeof updateSettings>[0]) => {
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => updateSettings(patch), 400)
+  }, [updateSettings])
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -36,10 +41,7 @@ export default function SettingsPage() {
             {(["light", "dark", "system"] as const).map((th) => (
               <button
                 key={th}
-                onClick={() => {
-                  setTheme(th)
-                  updateSettings({ theme: th })
-                }}
+                onClick={() => setTheme(th)}
                 className={`rounded-md px-3 py-1.5 text-sm capitalize ${
                   activeTheme === th
                     ? "bg-primary text-primary-foreground"
@@ -78,18 +80,6 @@ export default function SettingsPage() {
         <label className="flex items-center gap-3 text-sm">
           <input
             type="checkbox"
-            checked={overwrite_existing}
-            onChange={(e) =>
-              updateSettings({ overwrite_existing: e.target.checked })
-            }
-            className="h-4 w-4 rounded border-input"
-          />
-          {t.settings.overwrite}
-        </label>
-
-        <label className="flex items-center gap-3 text-sm">
-          <input
-            type="checkbox"
             checked={remember_recent_files}
             onChange={(e) =>
               updateSettings({ remember_recent_files: e.target.checked })
@@ -106,10 +96,11 @@ export default function SettingsPage() {
               type="number"
               value={max_recent_files}
               onChange={(e) =>
-                updateSettings({ max_recent_files: Number(e.target.value) })
+                debouncedUpdate({ max_recent_files: Math.max(5, Math.min(50, Number(e.target.value) || 5)) })
               }
               min={5}
               max={50}
+              aria-label={t.settings.maxRecent}
               className="w-20 rounded-md border border-input bg-background px-2 py-1 text-sm"
             />
           </div>
@@ -122,9 +113,10 @@ export default function SettingsPage() {
           type="text"
           value={default_output_dir}
           onChange={(e) =>
-            updateSettings({ default_output_dir: e.target.value })
+            debouncedUpdate({ default_output_dir: e.target.value })
           }
           placeholder={t.settings.defaultOutputPlaceholder}
+          aria-label={t.settings.defaultOutput}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
         <p className="text-xs text-muted-foreground">

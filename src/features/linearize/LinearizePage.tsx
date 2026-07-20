@@ -6,13 +6,12 @@ import { Zap } from "lucide-react"
 import { useI18n } from "@/i18n"
 
 export default function LinearizePage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const { loading, runWithToast } = useQpdf()
   const { file, handleDrop, saveFile } = useFileSelection()
   const t = useI18n()
 
   const handleLinearize = async () => {
     if (!file) return toast.error(t.linearize.errorFile)
-    startLoading()
     const baseName = file.replace(/\.pdf$/i, "")
     const outputPath = await saveFile(`${baseName}_linearized.pdf`)
     if (!outputPath) return

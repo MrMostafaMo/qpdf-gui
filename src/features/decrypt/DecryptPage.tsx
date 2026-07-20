@@ -1,17 +1,26 @@
-import { useQpdf, useFileSelection } from "@/hooks"
+import { useFileSelection } from "@/hooks"
 import { useState } from "react"
+import { invoke } from "@tauri-apps/api/core"
+import { getCurrentWindow } from "@tauri-apps/api/window"
+import { sendNotification } from "@tauri-apps/plugin-notification"
 import { toast } from "sonner"
 import { ProgressOverlay, DropZone } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { Unlock, X, FolderOpen } from "lucide-react"
 import { useI18n } from "@/i18n"
+import { useLogStore } from "@/components/shared/OperationLogs"
+import { useLoadingStore } from "@/stores"
+import type { OperationResult } from "@/types"
 
 export default function DecryptPage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const loading = useLoadingStore((s) => s.loading)
+  const setLoading = useLoadingStore((s) => s.setLoading)
   const { files, setFiles, handleDrop, pickDirectory } = useFileSelection(true)
   const [password, setPassword] = useState("")
   const [outputDir, setOutputDir] = useState<string | null>(null)
   const [progressMsg, setProgressMsg] = useState("")
+  const addLog = useLogStore((s) => s.addEntry)
+  const updateLog = useLogStore((s) => s.updateEntry)
   const t = useI18n()
 
   const handleDecrypt = async () => {
@@ -24,19 +33,51 @@ export default function DecryptPage() {
       if (!dir) return
       setOutputDir(dir)
     }
-    startLoading()
+    setLoading(true)
 
+    let successCount = 0
+    let errorCount = 0
     for (let i = 0; i < files.length; i++) {
       const f = files[i]
       const name = f.split("/").pop()?.replace(/\.pdf$/i, "") || "file"
+      const outputPath = `${dir}/${name}_decrypted.pdf`
       setProgressMsg(`${t.decrypt.loading} (${i + 1}/${files.length}) ${f.split("/").pop()}`)
-      await runWithToast("decrypt_pdf", {
-        filePath: f,
-        outputPath: `${dir}/${name}_decrypted.pdf`,
-        password,
+      const logId = addLog({
+        operation: "decrypt_pdf",
+        inputFile: f.split("/").pop() || f,
+        outputFile: `${name}_decrypted.pdf`,
+        status: "running",
       })
+      try {
+        const result = await invoke<OperationResult>("decrypt_pdf", {
+          filePath: f,
+          outputPath,
+          password,
+        })
+        if (result.success) {
+          successCount++
+          updateLog(logId, { status: "success", message: result.message })
+        } else {
+          errorCount++
+          updateLog(logId, { status: "error", message: result.message })
+        }
+      } catch (error) {
+        errorCount++
+        const message = error instanceof Error ? error.message : String(error)
+        updateLog(logId, { status: "error", message })
+      }
     }
     setProgressMsg("")
+    setLoading(false)
+
+    const summary = errorCount === 0
+      ? `${successCount} files decrypted`
+      : `${successCount} OK, ${errorCount} errors`
+    toast[errorCount === 0 ? "success" : "error"](summary)
+    const focused = await getCurrentWindow().isFocused()
+    if (!focused) {
+      sendNotification({ title: "Decrypt", body: summary })
+    }
   }
 
   return (
@@ -75,6 +116,7 @@ export default function DecryptPage() {
         placeholder={t.decrypt.enterPassword}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        aria-label={t.decrypt.enterPassword}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
       <Button

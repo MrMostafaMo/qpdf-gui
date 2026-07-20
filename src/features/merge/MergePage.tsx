@@ -6,7 +6,7 @@ import { Save, X, ArrowUp, ArrowDown } from "lucide-react"
 import { useI18n } from "@/i18n"
 
 export default function MergePage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const { loading, runWithToast } = useQpdf()
   const { files, setFiles, handleDrop, saveFile } = useFileSelection(true)
   const t = useI18n()
 
@@ -22,7 +22,6 @@ export default function MergePage() {
       toast.error(t.merge.errorMin)
       return
     }
-    startLoading()
     const outputPath = await saveFile("merged.pdf")
     if (!outputPath) return
 
@@ -45,7 +44,7 @@ export default function MergePage() {
       {files.length > 0 && (
         <div className="space-y-1">
           {files.map((f, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm">
+            <div key={`${f}-${i}`} className="flex items-center gap-2 text-sm">
               <span className="truncate flex-1 text-muted-foreground">
                 {f.split("/").pop()}
               </span>

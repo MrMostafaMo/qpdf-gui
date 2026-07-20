@@ -53,10 +53,13 @@ const ar: TranslationKeys = {
     page: "صفحة",
     filesSelected: "ملفات محددة",
     fileSelected: "ملف محدد",
+    chooseInputFolder: "اختر مجلد الإدخال",
     chooseOutputFolder: "اختر مجلد الإخراج",
     result: "النتيجة",
     before: "قبل",
     after: "بعد",
+    notifyComplete: "تمت العملية",
+    notifyFailed: "فشلت العملية",
   },
 
   dashboard: {
@@ -108,6 +111,7 @@ const ar: TranslationKeys = {
     every: "كل",
     intervalError: "يجب أن يكون العدد 1 على الأقل",
     rangeError: "أدخل نطاق الصفحات",
+    placeholder: "المجالات (مثلاً 1-5,8,10-12)",
     btnIdle: "تقسيم PDF",
     btnLoading: "جاري التقسيم...",
     loading: "جاري تقسيم الملف...",

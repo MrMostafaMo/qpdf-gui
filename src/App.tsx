@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { Toaster } from "sonner"
 import { useTheme } from "@/hooks"
 import { useSettingsStore } from "@/stores/settingsStore"
@@ -20,13 +20,21 @@ import BatchPage from "@/features/batch/BatchPage"
 import SettingsPage from "@/features/settings/SettingsPage"
 
 export default function App() {
-  useTheme()
+  const { theme, setTheme } = useTheme()
   const loadSettings = useSettingsStore((s) => s.loadSettings)
   const language = useSettingsStore((s) => s.language)
+  const savedTheme = useSettingsStore((s) => s.theme)
 
   useEffect(() => {
     loadSettings()
   }, [loadSettings])
+
+  useEffect(() => {
+    if (savedTheme && savedTheme !== theme) {
+      setTheme(savedTheme)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedTheme])
 
   useEffect(() => {
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr"
@@ -51,6 +59,7 @@ export default function App() {
           <Route path="/info" element={<InfoPage />} />
           <Route path="/batch" element={<BatchPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
     </BrowserRouter>

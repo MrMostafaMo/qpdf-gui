@@ -8,7 +8,7 @@ import { isValidPageRange } from "@/utils/validators"
 import { useI18n } from "@/i18n"
 
 export default function RotatePage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const { loading, runWithToast } = useQpdf()
   const { file, handleDrop, saveFile } = useFileSelection()
   const [angle, setAngle] = useState<90 | 180 | 270>(90)
   const [pages, setPages] = useState("")
@@ -21,7 +21,6 @@ export default function RotatePage() {
       toast.error(t.rotate.errorInvalid)
       return
     }
-    startLoading()
     const baseName = file.replace(/\.pdf$/i, "")
     const outputPath = await saveFile(`${baseName}_rotated.pdf`)
     if (!outputPath) return
@@ -30,7 +29,7 @@ export default function RotatePage() {
       filePath: file,
       outputPath,
       angle,
-      pages: pages || "all",
+      pages: pages || "1-end",
     })
   }
 
@@ -63,6 +62,7 @@ export default function RotatePage() {
         placeholder={t.rotate.placeholder}
         value={pages}
         onChange={(e) => setPages(e.target.value)}
+        aria-label={t.rotate.placeholder}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
       <Button

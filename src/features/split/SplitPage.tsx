@@ -8,27 +8,28 @@ import { isValidPageRange } from "@/utils/validators"
 import { useI18n } from "@/i18n"
 
 export default function SplitPage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const { loading, runWithToast } = useQpdf()
   const { file, handleDrop, pickDirectory } = useFileSelection()
   const [mode, setMode] = useState<"ranges" | "every">("ranges")
   const [pages, setPages] = useState("")
-  const [interval, setInterval] = useState(1)
+  const [chunkSize, setChunkSize] = useState(1)
   const [outputDir, setOutputDir] = useState<string | null>(null)
   const t = useI18n()
 
-  const pagesValid = mode === "every" || !pages || isValidPageRange(pages)
+  const pagesValid =
+    mode === "every"
+      ? chunkSize >= 1
+      : !!pages && isValidPageRange(pages)
 
   const handleSplit = async () => {
     if (!file) return toast.error(t.split.errorFile)
 
-    if (!outputDir) {
-      const dir = await pickDirectory()
+    let dir = outputDir
+    if (!dir) {
+      dir = await pickDirectory()
       if (!dir) return
       setOutputDir(dir)
     }
-
-    const dir = outputDir ?? (await pickDirectory())
-    if (!dir) return
 
     if (mode === "ranges") {
       if (!pages) return toast.error(t.split.rangeError)
@@ -36,7 +37,6 @@ export default function SplitPage() {
         toast.error(t.split.errorInvalid)
         return
       }
-      startLoading()
       await runWithToast("split_pdf", {
         filePath: file,
         outputDir: dir,
@@ -44,13 +44,12 @@ export default function SplitPage() {
         ranges: pages,
       })
     } else {
-      if (interval < 1) return toast.error(t.split.intervalError)
-      startLoading()
+      if (chunkSize < 1) return toast.error(t.split.intervalError)
       await runWithToast("split_pdf", {
         filePath: file,
         outputDir: dir,
         mode: "every",
-        interval,
+        interval: chunkSize,
       })
     }
   }
@@ -84,9 +83,10 @@ export default function SplitPage() {
       {mode === "ranges" ? (
         <input
           type="text"
-          placeholder={t.extract.placeholder}
+          placeholder={t.split.placeholder}
           value={pages}
           onChange={(e) => setPages(e.target.value)}
+          aria-label={t.split.placeholder}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       ) : (
@@ -97,19 +97,22 @@ export default function SplitPage() {
           <input
             type="number"
             min={1}
-            value={interval}
-            onChange={(e) => setInterval(Number(e.target.value))}
+            value={chunkSize}
+            onChange={(e) => setChunkSize(Number(e.target.value) || 1)}
+            aria-label={t.split.everyN}
             className="w-20 rounded-md border border-input bg-background px-2 py-1.5 text-sm"
           />
           <span className="text-sm text-muted-foreground">
-            {t.shared.page}{interval !== 1 ? "s" : ""}
+            {chunkSize !== 1 ? t.shared.pages : t.shared.page}
           </span>
         </div>
       )}
 
       <Button
-        onClick={handleSplit}
-        disabled={loading || !file || !pagesValid}
+        onClick={async () => {
+          const dir = await pickDirectory()
+          if (dir) setOutputDir(dir)
+        }}
         variant="outline"
       >
         <FolderOpen />

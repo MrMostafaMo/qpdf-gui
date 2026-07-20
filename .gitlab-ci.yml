@@ -9,7 +9,6 @@ cache:
   key: "${CI_COMMIT_REF_SLUG}"
   paths:
     - .pnpm-store
-    - node_modules
     - src-tauri/target
 
 # ---------------------------------------------------------------------------
@@ -31,6 +30,7 @@ build:linux-x86_64:
     - export PATH="$HOME/.cargo/bin:$PATH"
     - curl -fsSL https://get.pnpm.io/install.sh | sh -
     - export PATH="$HOME/.local/share/pnpm:$PATH"
+    - corepack enable && corepack prepare pnpm@11.13.0 --activate
     - pnpm install --frozen-lockfile
   script:
     - export PATH="$HOME/.cargo/bin:$HOME/.local/share/pnpm:$PATH"
@@ -71,6 +71,7 @@ build:linux-arm64:
     - export PATH="$HOME/.cargo/bin:$PATH"
     - curl -fsSL https://get.pnpm.io/install.sh | sh -
     - export PATH="$HOME/.local/share/pnpm:$PATH"
+    - corepack enable && corepack prepare pnpm@11.13.0 --activate
     - pnpm install --frozen-lockfile
   script:
     - export PATH="$HOME/.cargo/bin:$HOME/.local/share/pnpm:$PATH"
@@ -112,6 +113,7 @@ build:windows:
     - rustup default stable
     - rustup target add $TARGET
     - npm install -g pnpm
+    - corepack enable && corepack prepare pnpm@11.13.0 --activate
   script:
     - curl -sL "https://github.com/qpdf/qpdf/releases/download/v12.3.2/qpdf-12.3.2-msvc64.zip" -o qpdf-win.zip
     - 7z x qpdf-win.zip -oqpdf-extract
@@ -144,6 +146,7 @@ build:macos:
     - export PATH="$HOME/.cargo/bin:$PATH"
     - curl -fsSL https://get.pnpm.io/install.sh | sh -
     - export PATH="$HOME/.local/share/pnpm:$PATH"
+    - corepack enable && corepack prepare pnpm@11.13.0 --activate
   script:
     - export PATH="$HOME/.cargo/bin:$HOME/.local/share/pnpm:$PATH"
     - QPDF_VERSION="12.3.2"

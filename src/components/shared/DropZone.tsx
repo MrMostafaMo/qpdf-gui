@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react"
+import { useCallback, useState, useEffect } from "react"
 import { Upload, FolderOpen } from "lucide-react"
+import { getCurrentWebview } from "@tauri-apps/api/webview"
 import { cn } from "@/lib/utils"
 import { useFilePicker } from "@/hooks"
 import { useI18n } from "@/i18n"
@@ -19,17 +20,24 @@ export function DropZone({
   const { pickFiles } = useFilePicker()
   const t = useI18n()
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setDragOver(false)
-      const files = Array.from(e.dataTransfer.files)
-        .filter((f) => f.name.toLowerCase().endsWith(".pdf"))
-        .map((f) => (f as unknown as { path: string }).path)
-      if (files.length > 0) onFilesSelected(files)
-    },
-    [onFilesSelected],
-  )
+  useEffect(() => {
+    const unlisten = getCurrentWebview().onDragDropEvent((event) => {
+      if (event.payload.type === "over") {
+        setDragOver(true)
+      } else if (event.payload.type === "drop") {
+        setDragOver(false)
+        const pdfFiles = event.payload.paths.filter((p) =>
+          p.toLowerCase().endsWith(".pdf"),
+        )
+        if (pdfFiles.length > 0) onFilesSelected(pdfFiles)
+      } else {
+        setDragOver(false)
+      }
+    })
+    return () => {
+      unlisten.then((fn) => fn())
+    }
+  }, [onFilesSelected])
 
   const handleBrowse = useCallback(async () => {
     const files = await pickFiles({ multiple })
@@ -38,12 +46,6 @@ export function DropZone({
 
   return (
     <div
-      onDragOver={(e) => {
-        e.preventDefault()
-        setDragOver(true)
-      }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={handleDrop}
       className={cn(
         "flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors",
         dragOver

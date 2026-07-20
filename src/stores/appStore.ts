@@ -1,6 +1,5 @@
 import { create } from "zustand"
-
-type Theme = "light" | "dark" | "system"
+import type { Theme } from "@/types/settings"
 
 interface AppState {
   sidebarCollapsed: boolean

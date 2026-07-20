@@ -17,9 +17,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 ### Linux Package Managers
 
-| Manager | Install Command |
-|---------|----------------|
-| AUR (Arch) | `yay -S qpdf-gui` |
+_No additional package manager support at this time. Use the direct download above._
 
 ## Features
 
@@ -110,13 +108,12 @@ qpdf-gui/
 │       ├── commands/       # Tauri IPC commands
 │       ├── services/       # qpdf CLI wrapper
 │       └── models/         # Data models
-├── aur/                    # Arch User Repository (PKGBUILD)
 └── package.json
 ```
 
 ## CI/CD
 
-GitHub Actions builds for Linux x86_64 (.deb, .rpm, .AppImage), Linux ARM64 (.deb, .rpm, .AppImage), Windows (.msi), and macOS (.dmg, Apple Silicon). Also available via AUR. Auto-update support via Tauri updater with signed releases.
+GitHub Actions builds for Linux x86_64 (.deb, .rpm, .AppImage), Linux ARM64 (.deb, .rpm, .AppImage), Windows (.msi), and macOS (.dmg, Apple Silicon). Auto-update support via Tauri updater with signed releases.
 
 ## Tests
 

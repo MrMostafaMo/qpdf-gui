@@ -1,7 +1,5 @@
-import { DropZone } from "@/components/shared"
 import { useFilePicker, useQpdf } from "@/hooks"
-import { useFileStore } from "@/stores"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { ProgressOverlay } from "@/components/shared"
 import { Button } from "@/components/ui/button"
@@ -9,32 +7,22 @@ import { Save, FolderOpen } from "lucide-react"
 import { useI18n } from "@/i18n"
 
 export default function BatchPage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const { loading, runWithToast } = useQpdf()
   const { pickDirectory } = useFilePicker()
   const [inputDir, setInputDir] = useState<string | null>(null)
   const [outputDir, setOutputDir] = useState<string | null>(null)
   const [operation, setOperation] = useState("optimize")
-  const pendingFile = useFileStore((s) => s.pendingFile)
-  const setPendingFile = useFileStore((s) => s.setPendingFile)
   const t = useI18n()
-
-  useEffect(() => {
-    if (pendingFile) { setInputDir(pendingFile); setPendingFile(null) }
-  }, [])
-
-  const handleDrop = (paths: string[]) => setInputDir(paths[0])
 
   const handleBatch = async () => {
     if (!inputDir) return toast.error(t.batch.errorNoInput)
-    if (!outputDir) {
-      const dir = await pickDirectory()
-      if (!dir) return
-      setOutputDir(dir)
-    }
 
-    const outDir = outputDir ?? (await pickDirectory())
-    if (!outDir) return
-    startLoading()
+    let outDir = outputDir
+    if (!outDir) {
+      outDir = await pickDirectory()
+      if (!outDir) return
+      setOutputDir(outDir)
+    }
 
     await runWithToast("batch_process", {
       inputDir,
@@ -61,7 +49,16 @@ export default function BatchPage() {
       <div className="space-y-4">
         <div>
           <p className="mb-2 text-sm font-medium">{t.batch.inputDir}</p>
-          <DropZone onFilesSelected={handleDrop} />
+          <Button
+            onClick={async () => {
+              const dir = await pickDirectory()
+              if (dir) setInputDir(dir)
+            }}
+            variant="outline"
+          >
+            <FolderOpen />
+            {inputDir ? inputDir.split("/").pop() : t.shared.chooseInputFolder}
+          </Button>
           {inputDir && (
             <p className="mt-2 truncate text-sm text-muted-foreground">
               {inputDir}

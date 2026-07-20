@@ -1,18 +1,27 @@
-import { useQpdf, useFileSelection } from "@/hooks"
+import { useFileSelection } from "@/hooks"
 import { useState } from "react"
+import { invoke } from "@tauri-apps/api/core"
+import { getCurrentWindow } from "@tauri-apps/api/window"
+import { sendNotification } from "@tauri-apps/plugin-notification"
 import { toast } from "sonner"
 import { ProgressOverlay, DropZone } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { Lock, X, FolderOpen } from "lucide-react"
 import { useI18n } from "@/i18n"
+import { useLogStore } from "@/components/shared/OperationLogs"
+import { useLoadingStore } from "@/stores"
+import type { OperationResult } from "@/types"
 
 export default function EncryptPage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const loading = useLoadingStore((s) => s.loading)
+  const setLoading = useLoadingStore((s) => s.setLoading)
   const { files, setFiles, handleDrop, pickDirectory } = useFileSelection(true)
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [outputDir, setOutputDir] = useState<string | null>(null)
   const [progressMsg, setProgressMsg] = useState("")
+  const addLog = useLogStore((s) => s.addEntry)
+  const updateLog = useLogStore((s) => s.updateEntry)
   const t = useI18n()
 
   const handleEncrypt = async () => {
@@ -26,21 +35,53 @@ export default function EncryptPage() {
       if (!dir) return
       setOutputDir(dir)
     }
-    startLoading()
+    setLoading(true)
 
+    let successCount = 0
+    let errorCount = 0
     for (let i = 0; i < files.length; i++) {
       const f = files[i]
       const name = f.split("/").pop()?.replace(/\.pdf$/i, "") || "file"
+      const outputPath = `${dir}/${name}_encrypted.pdf`
       setProgressMsg(`${t.encrypt.loading} (${i + 1}/${files.length}) ${f.split("/").pop()}`)
-      await runWithToast("encrypt_pdf", {
-        filePath: f,
-        outputPath: `${dir}/${name}_encrypted.pdf`,
-        ownerPassword: password,
-        userPassword: password,
-        keyLength: 256,
+      const logId = addLog({
+        operation: "encrypt_pdf",
+        inputFile: f.split("/").pop() || f,
+        outputFile: `${name}_encrypted.pdf`,
+        status: "running",
       })
+      try {
+        const result = await invoke<OperationResult>("encrypt_pdf", {
+          filePath: f,
+          outputPath,
+          ownerPassword: password,
+          userPassword: password,
+          keyLength: 256,
+        })
+        if (result.success) {
+          successCount++
+          updateLog(logId, { status: "success", message: result.message })
+        } else {
+          errorCount++
+          updateLog(logId, { status: "error", message: result.message })
+        }
+      } catch (error) {
+        errorCount++
+        const message = error instanceof Error ? error.message : String(error)
+        updateLog(logId, { status: "error", message })
+      }
     }
     setProgressMsg("")
+    setLoading(false)
+
+    const summary = errorCount === 0
+      ? `${successCount} files encrypted`
+      : `${successCount} OK, ${errorCount} errors`
+    toast[errorCount === 0 ? "success" : "error"](summary)
+    const focused = await getCurrentWindow().isFocused()
+    if (!focused) {
+      sendNotification({ title: "Encrypt", body: summary })
+    }
   }
 
   return (
@@ -79,6 +120,7 @@ export default function EncryptPage() {
         placeholder={t.encrypt.password}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        aria-label={t.encrypt.password}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
       <input
@@ -86,6 +128,7 @@ export default function EncryptPage() {
         placeholder={t.encrypt.confirmPassword}
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
+        aria-label={t.encrypt.confirmPassword}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
       <Button

@@ -2,8 +2,8 @@ export function isValidPageRange(input: string): boolean {
   if (!input.trim()) return false
   const parts = input.split(",").map((s) => s.trim())
   for (const part of parts) {
-    if (/^\d+$/.test(part)) continue
-    if (/^\d+\s*-\s*\d+$/.test(part)) continue
+    if (/^[1-9]\d*$/.test(part)) continue
+    if (/^[1-9]\d*\s*-\s*[1-9]\d*$/.test(part)) continue
     return false
   }
   return true

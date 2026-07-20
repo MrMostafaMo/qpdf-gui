@@ -31,17 +31,25 @@ fn qpdf_command(args: &[&str]) -> Command {
                     path.push_str(&resource_dir.to_string_lossy());
                     cmd.env("PATH", &path);
                 }
-                if cfg!(target_os = "linux") {
-                    let lib_dir = resource_dir.join("lib");
-                    if lib_dir.exists() {
-                        let lib_str = lib_dir.to_string_lossy();
+                if cfg!(target_os = "linux") || cfg!(target_os = "macos") {
+                    let res_str = resource_dir.to_string_lossy();
+                    if cfg!(target_os = "linux") {
                         let existing = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
                         let new_path = if existing.is_empty() {
-                            lib_str.to_string()
+                            res_str.to_string()
                         } else {
-                            format!("{existing}:{lib_str}")
+                            format!("{existing}:{res_str}")
                         };
                         cmd.env("LD_LIBRARY_PATH", &new_path);
+                    }
+                    if cfg!(target_os = "macos") {
+                        let existing = std::env::var("DYLD_LIBRARY_PATH").unwrap_or_default();
+                        let new_path = if existing.is_empty() {
+                            res_str.to_string()
+                        } else {
+                            format!("{existing}:{res_str}")
+                        };
+                        cmd.env("DYLD_LIBRARY_PATH", &new_path);
                     }
                 }
                 cmd.current_dir(&resource_dir);
@@ -64,9 +72,16 @@ impl QpdfService {
             .output()
             .map_err(|e| AppError::Qpdf(format!("Failed to execute qpdf: {e}")))?;
 
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let code = output.status.code().unwrap_or(1);
+
         if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(AppError::Qpdf(format!("qpdf failed: {stderr}")));
+            // Exit code 2 = warnings only (valid output produced)
+            if code == 2 {
+                return Ok(String::from_utf8_lossy(&output.stdout).to_string());
+            }
+            // Any other non-zero = real error
+            return Err(AppError::Qpdf(format!("qpdf failed (exit {code}): {stderr}")));
         }
 
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -112,6 +127,13 @@ impl QpdfService {
                             .get("producer")
                             .and_then(|v| v.as_str())
                             .map(|s| s.to_string());
+                        info.author = first
+                            .get("author")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string());
+                        if let Some(ts) = first.get("creation_date").and_then(|v| v.as_i64()) {
+                            info.creation_date = Some(ts.to_string());
+                        }
                     }
                 }
             }
@@ -129,7 +151,7 @@ impl QpdfService {
             file_path,
             "--pages",
             file_path,
-            &format!("{pages}"),
+            pages,
             "--",
             output_path,
         ])?;
@@ -144,9 +166,9 @@ impl QpdfService {
         }
 
         let mut args: Vec<&str> = Vec::new();
-        args.push(&file_paths[0]);
+        args.push("--empty");
         args.push("--pages");
-        for path in &file_paths[1..] {
+        for path in file_paths {
             args.push(path);
             args.push("");
         }
@@ -174,7 +196,11 @@ impl QpdfService {
         output_path: &str,
     ) -> AppResult<()> {
         let page_count = Self::get_page_count(file_path)?;
-        let range = format!("1-{page_count},x{pages}");
+        let excluded: Vec<String> = pages
+            .split(',')
+            .map(|p| format!("x{}", p.trim()))
+            .collect();
+        let range = format!("1-{page_count},{}", excluded.join(","));
         Self::run_qpdf(&[
             file_path,
             "--pages",
@@ -196,7 +222,11 @@ impl QpdfService {
         let key_str = match key_length {
             128 => "128",
             256 => "256",
-            _ => "256",
+            _ => {
+                return Err(AppError::InvalidRequest(
+                    format!("Invalid key length: {key_length}. Use 128 or 256"),
+                ));
+            }
         };
 
         Self::run_qpdf(&[
@@ -231,7 +261,11 @@ impl QpdfService {
             "generalized" => args.push("--decode-level=generalized"),
             "specialized" => args.push("--decode-level=specialized"),
             "none" => args.push("--decode-level=none"),
-            _ => {}
+            _ => {
+                return Err(AppError::InvalidRequest(
+                    format!("Invalid optimize level: {level}. Use all, generalized, specialized, or none"),
+                ));
+            }
         }
         args.push(file_path);
         args.push("--");

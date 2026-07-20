@@ -1,6 +1,59 @@
+use std::path::PathBuf;
+
 use crate::models::PdfInfo;
 use crate::services::qpdf::QpdfService;
-use crate::utils::AppResult;
+use crate::utils::{AppError, AppResult};
+
+/// Validate that a page range string contains only digits, hyphens, commas, and spaces.
+/// Rejects page 0 (PDFs are 1-indexed), reversed ranges, and path traversal characters.
+fn validate_page_range(pages: &str) -> AppResult<()> {
+    if pages.trim().is_empty() {
+        return Err(AppError::InvalidRequest(
+            "Page range is empty".to_string(),
+        ));
+    }
+    for part in pages.split(',') {
+        let part = part.trim();
+        if part.is_empty() {
+            continue;
+        }
+        for ch in part.chars() {
+            if !ch.is_ascii_digit() && ch != '-' && ch != ' ' {
+                return Err(AppError::InvalidRequest(
+                    format!("Invalid character '{ch}' in page range"),
+                ));
+            }
+        }
+        let dash_count = part.chars().filter(|&c| c == '-').count();
+        if dash_count > 1 {
+            return Err(AppError::InvalidRequest(
+                format!("Invalid range: {part} (multiple dashes)"),
+            ));
+        }
+        let tokens: Vec<&str> = part.split('-').map(|t| t.trim()).filter(|t| !t.is_empty()).collect();
+        if tokens.is_empty() {
+            continue;
+        }
+        let mut nums: Vec<u32> = Vec::new();
+        for token in &tokens {
+            let num: u32 = token.parse().map_err(|_| {
+                AppError::InvalidRequest(format!("Invalid page number: {token}"))
+            })?;
+            if num == 0 {
+                return Err(AppError::InvalidRequest(
+                    "Page 0 is invalid; PDFs are 1-indexed".to_string(),
+                ));
+            }
+            nums.push(num);
+        }
+        if nums.len() == 2 && nums[0] > nums[1] {
+            return Err(AppError::InvalidRequest(
+                format!("Reversed range: {part}"),
+            ));
+        }
+    }
+    Ok(())
+}
 
 #[tauri::command]
 pub fn get_pdf_info(file_path: String) -> AppResult<PdfInfo> {
@@ -13,6 +66,7 @@ pub fn extract_pages(
     pages: String,
     output_path: String,
 ) -> AppResult<crate::models::OperationResult> {
+    validate_page_range(&pages)?;
     QpdfService::extract_pages(&file_path, &pages, &output_path)?;
     Ok(crate::models::OperationResult {
         success: true,
@@ -46,27 +100,40 @@ pub fn split_pdf(
     match mode.as_str() {
         "ranges" => {
             let ranges_str = ranges.unwrap_or_default();
-            // Split by comma-separated ranges, create separate files
+            let mut created = false;
+            std::fs::create_dir_all(&output_dir)?;
             for range in ranges_str.split(',') {
                 let range = range.trim();
                 if !range.is_empty() {
-                    let out = format!("{output_dir}/{range}.pdf");
-                    std::fs::create_dir_all(&output_dir)?;
-                    QpdfService::extract_pages(&file_path, range, &out)?;
+                    // Reject path traversal characters
+                    if range.contains('/') || range.contains('\\') || range.contains("..") {
+                        return Err(AppError::InvalidRequest(
+                            format!("Invalid range: {range}"),
+                        ));
+                    }
+                    validate_page_range(range)?;
+                    let out = PathBuf::from(&output_dir).join(format!("{range}.pdf"));
+                    QpdfService::extract_pages(&file_path, range, &out.to_string_lossy())?;
+                    created = true;
                 }
+            }
+            if !created {
+                return Err(AppError::InvalidRequest(
+                    "No valid page ranges provided".to_string(),
+                ));
             }
         }
         "every" => {
-            let interval = interval.unwrap_or(1);
+            let interval = interval.unwrap_or(1).max(1);
             let page_count = QpdfService::get_page_count(&file_path)?;
             std::fs::create_dir_all(&output_dir)?;
-            let mut start = 1;
+            let mut start: u32 = 1;
             let mut chunk = 1;
             while start <= page_count {
-                let end = std::cmp::min(start + interval - 1, page_count);
+                let end = (start as u64 + interval as u64 - 1).min(page_count as u64) as u32;
                 let range = format!("{start}-{end}");
-                let out = format!("{output_dir}/pages_{chunk}.pdf");
-                QpdfService::extract_pages(&file_path, &range, &out)?;
+                let out = PathBuf::from(&output_dir).join(format!("pages_{chunk}.pdf"));
+                QpdfService::extract_pages(&file_path, &range, &out.to_string_lossy())?;
                 start = end + 1;
                 chunk += 1;
             }
@@ -97,6 +164,7 @@ pub fn rotate_pages(
             format!("Invalid angle: {angle}. Must be 90, 180, or 270"),
         ));
     }
+    validate_page_range(&pages)?;
     QpdfService::rotate_pages(&file_path, &pages, angle, &output_path)?;
     Ok(crate::models::OperationResult {
         success: true,
@@ -111,6 +179,7 @@ pub fn delete_pages(
     pages: String,
     output_path: String,
 ) -> AppResult<crate::models::OperationResult> {
+    validate_page_range(&pages)?;
     QpdfService::delete_pages(&file_path, &pages, &output_path)?;
     Ok(crate::models::OperationResult {
         success: true,
@@ -127,6 +196,11 @@ pub fn encrypt_pdf(
     user_password: String,
     key_length: u32,
 ) -> AppResult<crate::models::OperationResult> {
+    if owner_password.is_empty() || user_password.is_empty() {
+        return Err(AppError::InvalidRequest(
+            "Passwords cannot be empty".to_string(),
+        ));
+    }
     QpdfService::encrypt_pdf(&file_path, &output_path, &owner_password, &user_password, key_length)?;
     Ok(crate::models::OperationResult {
         success: true,
@@ -141,6 +215,11 @@ pub fn decrypt_pdf(
     output_path: String,
     password: String,
 ) -> AppResult<crate::models::OperationResult> {
+    if password.is_empty() {
+        return Err(AppError::InvalidRequest(
+            "Password cannot be empty".to_string(),
+        ));
+    }
     QpdfService::decrypt_pdf(&file_path, &output_path, &password)?;
     Ok(crate::models::OperationResult {
         success: true,
@@ -197,24 +276,27 @@ pub fn batch_process(
     for entry in std::fs::read_dir(input_path)? {
         let entry = entry?;
         let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) != Some("pdf") {
+        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+        if ext.to_lowercase() != "pdf" {
             continue;
         }
 
-        let file_name = path.file_name().unwrap().to_string_lossy().to_string();
-        let stem = path.file_stem().unwrap().to_string_lossy().to_string();
-        let out = format!("{output_dir}/{stem}_{operation}.pdf");
+        let Some(file_name) = path.file_name().map(|n| n.to_string_lossy().to_string()) else {
+            continue;
+        };
+        let Some(stem) = path.file_stem().map(|n| n.to_string_lossy().to_string()) else {
+            continue;
+        };
 
         let result = match operation.as_str() {
-            "optimize" => QpdfService::optimize_pdf(
-                &path.to_string_lossy(),
-                &out,
-                "ebook",
-            ),
-            "linearize" => QpdfService::linearize_pdf(
-                &path.to_string_lossy(),
-                &out,
-            ),
+            "optimize" => {
+                let out = PathBuf::from(&output_dir).join(format!("{stem}_{operation}.pdf"));
+                QpdfService::optimize_pdf(&path.to_string_lossy(), &out.to_string_lossy(), "generalized")
+            }
+            "linearize" => {
+                let out = PathBuf::from(&output_dir).join(format!("{stem}_{operation}.pdf"));
+                QpdfService::linearize_pdf(&path.to_string_lossy(), &out.to_string_lossy())
+            }
             _ => {
                 errors.push(format!("Unknown operation: {operation}"));
                 continue;

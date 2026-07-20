@@ -8,7 +8,7 @@ import { isValidPageRange } from "@/utils/validators"
 import { useI18n } from "@/i18n"
 
 export default function DeletePage() {
-  const { loading, runWithToast, startLoading } = useQpdf()
+  const { loading, runWithToast } = useQpdf()
   const { file, handleDrop, saveFile } = useFileSelection()
   const [pages, setPages] = useState("")
   const t = useI18n()
@@ -21,7 +21,6 @@ export default function DeletePage() {
       toast.error(t.delete.errorInvalid)
       return
     }
-    startLoading()
     const baseName = file.replace(/\.pdf$/i, "")
     const outputPath = await saveFile(`${baseName}_pages_removed.pdf`)
     if (!outputPath) return
@@ -51,6 +50,7 @@ export default function DeletePage() {
         placeholder={t.delete.placeholder}
         value={pages}
         onChange={(e) => setPages(e.target.value)}
+        aria-label={t.delete.placeholder}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
       <Button

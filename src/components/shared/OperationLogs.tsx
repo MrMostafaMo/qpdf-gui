@@ -50,6 +50,19 @@ const STATUS_ICONS = {
   error: <XCircle className="h-4 w-4 text-destructive" />,
 }
 
+const OPERATION_NAMES: Record<string, string> = {
+  extract_pages: "extract",
+  merge_pdfs: "merge",
+  split_pdf: "split",
+  rotate_pages: "rotate",
+  delete_pages: "delete",
+  encrypt_pdf: "encrypt",
+  decrypt_pdf: "decrypt",
+  optimize_pdf: "optimize",
+  linearize_pdf: "linearize",
+  batch_process: "batch",
+}
+
 export function OperationLogs() {
   const { entries, clearLogs } = useLogStore()
   const t = useI18n()
@@ -77,7 +90,7 @@ export function OperationLogs() {
           >
             {STATUS_ICONS[entry.status]}
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium">{entry.operation}</p>
+              <p className="text-xs font-medium">{t.nav[OPERATION_NAMES[entry.operation] as keyof typeof t.nav] || entry.operation}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {entry.inputFile}
                 {entry.outputFile && ` → ${entry.outputFile}`}
