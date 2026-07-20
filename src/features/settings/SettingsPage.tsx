@@ -18,7 +18,7 @@ export default function SettingsPage() {
   } = useSettingsStore()
   const { theme: activeTheme, setTheme } = useTheme()
   const t = useI18n()
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const debouncedUpdate = useCallback((patch: Parameters<typeof updateSettings>[0]) => {
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => updateSettings(patch), 400)
