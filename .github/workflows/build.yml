@@ -11,7 +11,6 @@ permissions:
   contents: write
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   APPIMAGE_EXTRACT_AND_RUN: "1"
   NO_STRIP: "true"
 
