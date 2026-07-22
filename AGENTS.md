@@ -15,9 +15,6 @@ pnpm tauri dev
 
 # Build
 pnpm tauri build
-
-# Build AppImage (requires env vars — see AppImage Build section)
-APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true pnpm tauri build --bundles appimage
 ```
 
 ## Tech Stack
@@ -185,9 +182,7 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 
 ### GitHub Actions
 - Workflow: `.github/workflows/build.yml`
-- Matrix: Linux x86_64 (ubuntu-24.04, .deb + .rpm + .AppImage), Linux ARM64 (ubuntu-24.04-arm, .deb + .rpm + .AppImage), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
-- `APPIMAGE_EXTRACT_AND_RUN: "1"` — required for AppImage builds
-- `NO_STRIP: "true"` — required for AppImage builds (fixes `linuxdeploy` `.relr.dyn` bug)
+- Matrix: Linux x86_64 (ubuntu-24.04, .deb + .rpm), Linux ARM64 (ubuntu-24.04-arm, .deb + .rpm), Windows (windows-latest, .msi), macOS (macos-14 Apple Silicon, .dmg)
 - qpdf is bundled: CI downloads prebuilt binaries (Linux/Windows) or compiles from source (macOS)
 - Auto-update: signing key in `src-tauri/updater.key` (gitignored), GitHub releases with `latest.json`
 - **Note:** GitHub Actions may be disabled due to billing — build locally if CI fails
@@ -196,7 +191,6 @@ Tauri v2 auto-renames Rust bare params (`file_path`) to camelCase (`filePath`) o
 - Pipeline: `.gitlab-ci.yml`
 - Linux x86_64: runs on GitLab shared runners
 - Linux ARM64, Windows, macOS: require self-hosted runners (optional, `allow_failure: true`)
-- Same env vars: `APPIMAGE_EXTRACT_AND_RUN=1`, `NO_STRIP=true`
 
 ## Input Validation
 
@@ -259,17 +253,6 @@ git tag v<VERSION> && git push origin v<VERSION>
 - qpdf is bundled with the app (no separate install needed)
 - macOS build is Apple Silicon (arm64), not universal binary
 - Windows build is x86_64 only
-- AppImage requires `APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true` due to known upstream `linuxdeploy` bug with `.relr.dyn` ELF sections
-
-## AppImage Build
-
-`linuxdeploy` crashes when `strip` encounters `.relr.dyn` sections in modern ELF binaries. Two env vars fix this:
-
-```bash
-APPIMAGE_EXTRACT_AND_RUN=1 NO_STRIP=true pnpm tauri build --bundles appimage
-```
-
-These vars are set in both CI files. Without them, AppImage build fails.
 
 ## Releases
 
